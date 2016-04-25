@@ -8,14 +8,18 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"os"
 	"log"
-	"io"
-	"compress/gzip"
 )
 
-const S3_BUCKET = "cms"
-const S3_REGION = "us-west-2"
+const S3_BUCKET = "cmsbuild"
+const S3_REGION = "eu-central-1"
 
 func Has(build BuildFile) bool {
+
+	/*if _, err := os.Stat(build.Archive); err == nil {
+		return true;
+	}
+
+	return false;*/
 
 	fmt.Println("Checking storage for hash", build.Hash)
 
@@ -29,10 +33,12 @@ func Has(build BuildFile) bool {
 	resp, err := svc.HeadObject(params)
 
 	if err != nil {
+		fmt.Println("Build not found")
+
 		return false
 	}
 
-	fmt.Println(resp)
+	fmt.Println("Build found", resp)
 
 	return true;
 }
@@ -63,7 +69,7 @@ func Get(build BuildFile) {
 
 func Put(build BuildFile) {
 
-	fmt.Println("Upload archive", build.Archive)
+	fmt.Println("Upload archive", build.Archive, build.Hash)
 
 	file, err := os.Open(build.Archive)
 
@@ -71,27 +77,16 @@ func Put(build BuildFile) {
 		log.Fatal("Failed to open file", err)
 	}
 
-	// Not required, but you could zip the file before uploading it
-	// using io.Pipe read/writer to stream gzip'd file contents.
-	reader, writer := io.Pipe()
-
-	go func() {
-		gw := gzip.NewWriter(writer)
-		io.Copy(gw, file)
-
-		file.Close()
-		gw.Close()
-		writer.Close()
-	}()
+	defer file.Close()
 
 	uploader := s3manager.NewUploader(session.New(&aws.Config{Region: aws.String(S3_REGION)}))
 	result, err := uploader.Upload(&s3manager.UploadInput{
-		Body:   	reader,
 		Bucket: 	aws.String(S3_BUCKET),
 		Key:    	aws.String(build.Hash),
-		Metadata:	map[string]*string{
+		Body:   	file,
+		/*Metadata:	map[string]*string{
 			"Name":	aws.String(build.Name),
-		},
+		},*/
 	})
 
 	if err != nil {

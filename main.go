@@ -18,16 +18,17 @@ func main() {
 		fmt.Println("Found build file", build)
 
 		hash, _	:= Analyzer(build.Directory, build.Verify.Include, build.Verify.Exclude)
-		archive	:= "hash.tar.gz"
+		build.Hash	= hash
+		build.Archive	= "hash_" + hash + ".tar.gz"
 
 		fmt.Println("Analyzing ends up with hash", hash)
 
 		if Has(build) {
 			Get(build)
-			Extract(archive, build.Directory)
+			Extract(build.Archive, build.Directory)
 		} else {
 			Builder(build.Directory, build.Build)
-			Archive(archive, build.Directory, build.Package.Include, build.Package.Exclude)
+			Compress(build.Archive, build.Directory, build.Package.Include, build.Package.Exclude)
 			Put(build)
 		}
 	}
