@@ -24,6 +24,7 @@ init:
 	go get github.com/bradfitz/slice
 	go get github.com/bmatcuk/doublestar
 	go get github.com/aws/aws-sdk-go
+	go get github.com/Sirupsen/logrus
 
 cleancode:
 	cd "$(DIR)"

@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"log"
+	"fmt"
 )
 
 func main() {
@@ -16,6 +17,7 @@ func main() {
 	skipUpload := flag.Bool("skip-upload", false, "Don't upload builds")
 	region := flag.String("s3-region", "eu-central-1", "Specify S3 region")
 	bucket := flag.String("s3-bucket", "cmsbuild", "Specify S3 bucket name")
+	version := flag.Bool("version", false, "Show version")
 
 	flag.Parse()
 
@@ -29,6 +31,11 @@ func main() {
 		skipUpload:   *skipUpload,
 		region:       *region,
 		bucket:       *bucket,
+	}
+
+	if (*version) {
+		fmt.Printf("Builder v%s (Build %s)\nCopyright (c) 2016 Garden of Concepts GmbH\n", APP_VERSION, APP_BUILD)
+		os.Exit(0)
 	}
 
 	app.path = getPath()
@@ -48,6 +55,7 @@ func getPath() string {
 
 	if (err != nil) {
 		log.Fatal("Invalid directory", err)
+		os.Exit(-1)
 	}
 
 	return path
