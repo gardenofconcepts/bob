@@ -1,9 +1,8 @@
-package app
+package main
 
 import (
 	"fmt"
 	"bytes"
-	"strings"
 	"os/exec"
 )
 
@@ -24,10 +23,9 @@ func run(directory string, build Build) error {
 
 	var out bytes.Buffer
 
-	cmd := exec.Command(build.Command)
-	cmd.Dir = directory
-	cmd.Stdin = strings.NewReader("some input")
-	cmd.Stdout = &out
+	cmd 		:= exec.Command(build.Command)
+	cmd.Dir 	= directory
+	cmd.Stdout	= &out
 
 	err := cmd.Run()
 
@@ -35,7 +33,7 @@ func run(directory string, build Build) error {
 		return err
 	}
 
-	fmt.Printf("in all caps: %q\n", out.String())
+	fmt.Printf("Result: %q\n", out.String())
 
 	return nil
 }

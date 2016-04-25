@@ -12,4 +12,4 @@ package:
   exclude:
     - "blubb/**"
 build:
-  - command: gulp install
+  - command: pwd

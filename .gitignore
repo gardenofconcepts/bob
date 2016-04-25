@@ -15,8 +15,6 @@ bin/*
 pkg/*
 !pkg/.gitkeep
 src/*
-!src/.gitkeep
-!src/app
 
 # Architecture specific extensions/prefixes
 *.[568vq]

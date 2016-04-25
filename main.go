@@ -1,9 +1,8 @@
 package main
 
-import "fmt"
 import (
 	"flag"
-	"app"
+	"fmt"
 )
 
 func main() {
@@ -13,23 +12,25 @@ func main() {
 
 	fmt.Println("Searching for build files in path:", *path)
 
-	builds := app.Read(*path, "*.yml")
+	builds := Read(*path, "*.build.yml")
 
 	for _, build := range builds {
 		fmt.Println("Found build file", build)
 
-		hash, _ := app.Analyzer(build.Directory, build.Verify.Include, build.Verify.Exclude)
-		archive := "/home/dennis/htdocs/builder/hash.tar.gz"
+		hash, _	:= Analyzer(build.Directory, build.Verify.Include, build.Verify.Exclude)
+		archive	:= "hash.tar.gz"
 
 		fmt.Println("Analyzing ends up with hash", hash)
 
-		if app.Has(hash) {
-			app.Get(hash, archive)
-			app.Extract(archive, build.Directory)
+		if Has(build) {
+			Get(build)
+			Extract(archive, build.Directory)
 		} else {
-			//app.Builder(build.Directory, build.Build)
-			app.Archive(archive, build.Directory, build.Package.Include, build.Package.Exclude)
-			app.Put(hash, archive)
+			Builder(build.Directory, build.Build)
+			Archive(archive, build.Directory, build.Package.Include, build.Package.Exclude)
+			Put(build)
 		}
 	}
+
+	fmt.Println("Ready!")
 }

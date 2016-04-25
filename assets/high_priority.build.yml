@@ -12,4 +12,4 @@ package:
   exclude:
     - "ne/**"
 build:
-  - command: gulp install
+  - command: pwd

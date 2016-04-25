@@ -1,4 +1,4 @@
-package app
+package main
 
 import (
 	"io/ioutil"
@@ -8,11 +8,11 @@ import (
 )
 
 func Parser(path string) *BuildFile {
-	build := new(BuildFile)
-	build.File		= path
+	build 		:= new(BuildFile)
+	build.File	= path
 	build.Directory	= filepath.Dir(path)
 	build.Priority	= 0
-	build.Name		= "Unknown"
+	build.Name	= "Unknown"
 
 	parse(build)
 

@@ -1,4 +1,4 @@
-package app
+package main
 
 import (
 	"io"
@@ -6,9 +6,12 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"fmt"
 )
 
 func Archive(path string, baseDir string, include []string, exclude []string) error {
+
+	fmt.Println("Archive files", path, baseDir)
 
 	tarfile, err := os.Create(path)
 
@@ -19,6 +22,7 @@ func Archive(path string, baseDir string, include []string, exclude []string) er
 	defer tarfile.Close()
 
 	tarball := tar.NewWriter(tarfile)
+
 	defer tarball.Close()
 
 	filepath.Walk(baseDir, func(path string, info os.FileInfo, err error) error {

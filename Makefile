@@ -1,14 +1,18 @@
-.PHONY: clean
+.PHONY: clean test run make
 
 DIR = $(shell pwd)
 
-make: main.go
+build:
 	cd "$(DIR)"
-	go build -o bin/builder main.go
+	go build -o bin/builder *.go
 
-run: main.go
+run:
 	cd "$(DIR)"
-	go run main.go -path assets
+	go build -o bin/builder *.go
+	./bin/builder -path assets
+
+test:
+	go test *.go
 
 clean:
 	rm -rf "$(DIR)/bin/*"
@@ -20,3 +24,5 @@ init: main.go
 	go get github.com/bradfitz/slice
 	go get github.com/bmatcuk/doublestar
 	go get github.com/aws/aws-sdk-go
+
+default: build

@@ -1,4 +1,4 @@
-package app
+package main
 
 type Build struct {
 	Command		string		`json:"command"`
@@ -18,8 +18,9 @@ type BuildFile struct {
 	File	 	string
 	Directory 	string
 	Hash		string
+	Archive		string
 	Name		string		`json:"name"`
-	Priority	int			`json:"priority"`
+	Priority	int		`json:"priority"`
 	Verify		Verify		`json:"verify"`
 	Package		Package		`json:"package"`
 	Build		[]Build		`json:"build"`
