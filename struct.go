@@ -25,3 +25,14 @@ type BuildFile struct {
 	Package   Package `json:"package"`
 	Build     []Build `json:"build"`
 }
+
+type AppConfig struct {
+	path         *string
+	debug        *bool
+	verbose      *bool
+	force        *bool
+	skipDownload *bool
+	skipUpload   *bool
+	region       *string
+	bucket       *string
+}

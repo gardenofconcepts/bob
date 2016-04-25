@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"github.com/bradfitz/slice"
 	"os"
 	"path/filepath"
@@ -22,7 +22,8 @@ func (reader *Result) read(glob string) []BuildFile {
 
 	filepath.Walk(reader.path, func(path string, file os.FileInfo, err error) error {
 		if err != nil {
-			fmt.Println(err)
+			log.Warning(err)
+
 			return nil
 		}
 
@@ -33,7 +34,8 @@ func (reader *Result) read(glob string) []BuildFile {
 		matched, err := filepath.Match(glob, file.Name())
 
 		if err != nil {
-			fmt.Println(err)
+			log.Warning(err)
+
 			return err
 		}
 

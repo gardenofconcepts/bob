@@ -1,4 +1,4 @@
-.PHONY: clean test run make cleancode
+.PHONY: build clean test run make cleancode init
 
 DIR = $(shell pwd)
 
@@ -17,7 +17,7 @@ test:
 clean:
 	rm -rf "$(DIR)/bin/*"
 
-init: main.go
+init:
 	cd "$(DIR)"
 	export GOPATH="$(DIR)"
 	go get gopkg.in/yaml.v2

@@ -1,12 +1,11 @@
 package main
 
 import (
-	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	"log"
 	"os"
 	"time"
 )
@@ -25,13 +24,7 @@ func Storage(region, bucket string) *Session {
 
 func (svc *Session) Has(build BuildFile) bool {
 
-	/*if _, err := os.Stat(build.Archive); err == nil {
-		return true;
-	}
-
-	return false;*/
-
-	fmt.Println("Checking storage for hash", build.Hash)
+	log.Info("Checking storage for hash", build.Hash)
 
 	params := &s3.HeadObjectInput{
 		Bucket: aws.String(svc.bucket),
@@ -41,23 +34,24 @@ func (svc *Session) Has(build BuildFile) bool {
 	resp, err := s3.New(svc.instance).HeadObject(params)
 
 	if err != nil {
-		fmt.Println("Build not found")
+		log.Warning("Build not found")
 
 		return false
 	}
 
-	fmt.Println("Build found", resp)
+	log.Info("Build found", resp)
 
 	return true
 }
 
-func (svc *Session) Get(build BuildFile) error {
+func (svc *Session) Get(build BuildFile) {
 
 	file, err := os.Create(build.Archive)
 
 	if err != nil {
 		log.Fatal("Failed to create file", err)
 	}
+
 	defer file.Close()
 
 	downloader := s3manager.NewDownloader(svc.instance)
@@ -68,17 +62,15 @@ func (svc *Session) Get(build BuildFile) error {
 		})
 
 	if err != nil {
-		return err
+		log.Fatal("Cannot download build", err)
 	}
 
-	fmt.Println("Downloaded file", file.Name(), numBytes, "bytes")
-
-	return nil
+	log.Info("Downloaded file", file.Name(), numBytes, "bytes")
 }
 
-func (svc *Session) Put(build BuildFile) error {
+func (svc *Session) Put(build BuildFile) {
 
-	fmt.Println("Upload archive", build.Archive, build.Hash)
+	log.Info("Upload archive", build.Archive, build.Hash)
 
 	file, err := os.Open(build.Archive)
 
@@ -102,10 +94,8 @@ func (svc *Session) Put(build BuildFile) error {
 	})
 
 	if err != nil {
-		return err
+		log.Fatal("Cannot upload build", err)
 	}
 
 	log.Println("Successfully uploaded to", result.Location)
-
-	return nil
 }

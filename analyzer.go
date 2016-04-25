@@ -1,13 +1,13 @@
 package main
 
 import (
-	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"os"
 	"path/filepath"
 )
 
 func Analyzer(directory string, include []string, exclude []string) (string, error) {
-	fmt.Println("Analyze directory", directory)
+	log.Info("Analyze directory", directory)
 
 	hashes := read(directory, include, exclude)
 	hash, err := hashList(hashes)
@@ -20,7 +20,7 @@ func read(path string, include []string, exclude []string) []string {
 
 	filepath.Walk(path, func(path string, file os.FileInfo, err error) error {
 		if err != nil {
-			fmt.Println(err)
+			log.Warning(err)
 			return nil
 		}
 
@@ -32,9 +32,9 @@ func read(path string, include []string, exclude []string) []string {
 			hash, _ := hashFile(path)
 			hashes = append(hashes, hash)
 
-			fmt.Println("Include file with hash", path, hash)
+			log.Debug("Include file with hash", path, hash)
 		} else {
-			fmt.Println("Skip file", path)
+			log.Debug("Skip file", path)
 		}
 
 		return nil

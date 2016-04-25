@@ -2,40 +2,22 @@ package main
 
 import (
 	"flag"
-	"fmt"
 )
 
 func main() {
-	path := flag.String("path", ".", "Path for searching build files")
-	region := flag.String("s3-region", "eu-central-1", "S3 region")
-	bucket := flag.String("s3-bucket", "cmsbuild", "S3 bucket name")
+	app := AppConfig{
+		path:         flag.String("path", ".", "Path for searching build files"),
+		debug:        flag.Bool("debug", false, "Enable debug mode (Log level: debug)"),
+		verbose:      flag.Bool("verbose", false, "Enable verbose mode (Log level: info)"),
+		force:        flag.Bool("force", false, "Rebuild data without remote check"),
+		skipDownload: flag.Bool("skip-download", false, "Don't download builds"),
+		skipUpload:   flag.Bool("skip-upload", false, "Don't upload builds"),
+		region:       flag.String("s3-region", "eu-central-1", "Specify S3 region"),
+		bucket:       flag.String("s3-bucket", "cmsbuild", "Specify S3 bucket name"),
+	}
 
 	flag.Parse()
 
-	fmt.Println("Searching for build files in path:", *path)
-
-	builds := NewReader(*path).read("*.build.yml")
-	storage := Storage(*region, *bucket)
-
-	for _, build := range builds {
-		fmt.Println("Found build file", build)
-
-		hash, _ := Analyzer(build.Directory, build.Verify.Include, build.Verify.Exclude)
-
-		build.Hash = hash
-		build.Archive = "build/" + hash + ".tar.gz"
-
-		fmt.Println("Analyzing ends up with hash", hash)
-
-		if storage.Has(build) {
-			storage.Get(build)
-			NewArchive(build.Archive).Extract(build.Directory)
-		} else {
-			Builder().Build(build.Directory, build.Build)
-			NewArchive(build.Archive).Compress(build.Directory, build.Package.Include, build.Package.Exclude)
-			storage.Put(build)
-		}
-	}
-
-	fmt.Println("Ready!")
+	app.configure()
+	app.run()
 }

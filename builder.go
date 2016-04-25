@@ -2,7 +2,7 @@ package main
 
 import (
 	"bytes"
-	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"os/exec"
 )
 
@@ -14,7 +14,7 @@ func Builder() *BuildJob {
 
 func (e *BuildJob) Build(directory string, builds []Build) {
 
-	fmt.Println("Starting build process...")
+	log.Info("Starting build process...")
 
 	for _, build := range builds {
 		e.Run(directory, build)
@@ -25,7 +25,7 @@ func (e *BuildJob) Build(directory string, builds []Build) {
 // http://www.darrencoxall.com/golang/executing-commands-in-go/
 func (e *BuildJob) Run(directory string, build Build) error {
 
-	fmt.Println("Run command on path", build.Command, directory)
+	log.Info("Run command on path", build.Command, directory)
 
 	var out bytes.Buffer
 
@@ -39,7 +39,7 @@ func (e *BuildJob) Run(directory string, build Build) error {
 		return err
 	}
 
-	fmt.Printf("Result: %q\n", out.String())
+	log.Debugf("Result: %q\n", out.String())
 
 	return nil
 }

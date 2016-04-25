@@ -3,7 +3,7 @@ package main
 import (
 	"archive/tar"
 	"compress/gzip"
-	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"io"
 	"os"
 	"path/filepath"
@@ -22,7 +22,7 @@ func NewArchive(path string) *Archive {
 
 func (archive *Archive) Compress(baseDir string, include []string, exclude []string) error {
 
-	fmt.Println("Archive files", archive.path, baseDir)
+	log.Info("Archive files", archive.path, baseDir)
 
 	tarfile, err := os.Create(archive.path)
 
@@ -80,7 +80,7 @@ func (archive *Archive) Compress(baseDir string, include []string, exclude []str
 }
 
 func (archive *Archive) Extract(dest string) error {
-	fmt.Println("Extract file to directory", archive.path, dest)
+	log.Info("Extract file to directory", archive.path, dest)
 
 	fd, err := os.Open(archive.path)
 	if err != nil {
