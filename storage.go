@@ -10,19 +10,19 @@ import (
 	"time"
 )
 
-type Session struct {
+type Storage struct {
 	instance *session.Session
 	bucket   string
 }
 
-func Storage(region, bucket string) *Session {
-	return &Session{
+func S3Storage(region, bucket string) *Storage {
+	return &Storage{
 		instance: session.New(&aws.Config{Region: aws.String(region)}),
 		bucket:   bucket,
 	}
 }
 
-func (svc *Session) Has(build BuildFile) bool {
+func (svc *Storage) Has(build BuildFile) bool {
 
 	log.Info("Checking storage for hash", build.Hash)
 
@@ -44,7 +44,7 @@ func (svc *Session) Has(build BuildFile) bool {
 	return true
 }
 
-func (svc *Session) Get(build BuildFile) {
+func (svc *Storage) Get(build BuildFile) {
 
 	file, err := os.Create(build.Archive)
 
@@ -68,7 +68,7 @@ func (svc *Session) Get(build BuildFile) {
 	log.Info("Downloaded file", file.Name(), numBytes, "bytes")
 }
 
-func (svc *Session) Put(build BuildFile) {
+func (svc *Storage) Put(build BuildFile) {
 
 	log.Info("Upload archive", build.Archive, build.Hash)
 

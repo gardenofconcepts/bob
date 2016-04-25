@@ -4,50 +4,54 @@ import (
 	log "github.com/Sirupsen/logrus"
 )
 
-func (config *AppConfig) configure() {
+func (app *App) configure() {
 	level := log.WarnLevel
 
-	if *config.verbose {
+	if app.verbose {
 		level = log.InfoLevel
 	}
 
-	if *config.debug {
+	if app.debug {
 		level = log.DebugLevel
 	}
 
 	log.SetLevel(level)
 }
 
-func (config *AppConfig) run() {
-	log.Info("Searching for build files in path:", *config.path)
+func (app *App) run() {
+	log.Info("Searching for build files in path:", app.path)
 
-	builds := NewReader(*config.path).read("*.build.yml")
-	storage := Storage(*config.region, *config.bucket)
+	builds := NewReader(app.path).read(app.pattern)
+	storage := S3Storage(app.region, app.bucket)
 
 	for _, build := range builds {
-		log.Info("Found build file", build)
-
-		hash, _ := Analyzer(build.Directory, build.Verify.Include, build.Verify.Exclude)
-
-		build.Hash = hash
-		build.Archive = "build/" + hash + ".tar.gz"
-
-		log.Info("Analyzing ends up with hash", hash)
-
-		if !*config.force && storage.Has(build) {
-			if !*config.skipDownload {
-				storage.Get(build)
-			}
-			NewArchive(build.Archive).Extract(build.Directory)
-		} else {
-			Builder().Build(build.Directory, build.Build)
-			NewArchive(build.Archive).Compress(build.Directory, build.Package.Include, build.Package.Exclude)
-
-			if !*config.skipUpload {
-				storage.Put(build)
-			}
-		}
+		app.build(build, *storage)
 	}
 
 	log.Info("Ready!")
+}
+
+func (app *App) build(build BuildFile, storage Storage) {
+	log.Info("Found build file", build)
+
+	hash, _ := Analyzer(build.Directory, build.Verify.Include, build.Verify.Exclude)
+
+	build.Hash = hash
+	build.Archive = "build/" + hash + ".tar.gz"
+
+	log.Info("Analyzing ends up with hash", hash)
+
+	if !app.force && storage.Has(build) {
+		if !app.skipDownload {
+			storage.Get(build)
+		}
+		NewArchive(build.Archive).Extract(build.Directory)
+	} else {
+		Builder().Build(build.Directory, build.Build)
+		NewArchive(build.Archive).Compress(build.Directory, build.Package.Include, build.Package.Exclude)
+
+		if !app.skipUpload {
+			storage.Put(build)
+		}
+	}
 }
