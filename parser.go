@@ -8,18 +8,15 @@ import (
 )
 
 func Parser(path string) *BuildFile {
-	build 		:= new(BuildFile)
-	build.File	= path
-	build.Directory	= filepath.Dir(path)
-	build.Priority	= 0
-	build.Name	= "Unknown"
-
-	parse(build)
-
-	return build
+	return &BuildFile{
+		File		: path,
+		Directory	: filepath.Dir(path),
+		Priority	: 0,
+		Name		: "Unknown",
+	}
 }
 
-func parse(build *BuildFile) {
+func (build *BuildFile) parse() *BuildFile {
 	data, err := ioutil.ReadFile(build.File)
 
 	if err != nil {
@@ -27,4 +24,6 @@ func parse(build *BuildFile) {
 	}
 
 	yaml.Unmarshal(data, build)
+
+	return build
 }

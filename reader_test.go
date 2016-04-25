@@ -3,7 +3,7 @@ package main
 import "testing"
 
 func TestReader(t *testing.T) {
-	builds := Read("assets", "*.yml")
+	builds := NewReader().read("assets", "*.build.yml")
 
 	if len(builds) != 2 {
 		t.Error("Expected 2, got ", len(builds))

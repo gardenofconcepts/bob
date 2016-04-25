@@ -6,18 +6,24 @@ import (
 	"os/exec"
 )
 
-func Builder(directory string, builds []Build) {
+type BuildJob struct{}
+
+func Builder() *BuildJob {
+	return &BuildJob{}
+}
+
+func (e *BuildJob) Build(directory string, builds []Build) {
 
 	fmt.Println("Starting build process...")
 
 	for _, build := range builds {
-		run(directory, build)
+		e.Run(directory, build)
 	}
 }
 
 // https://golang.org/src/os/exec/example_test.go
 // http://www.darrencoxall.com/golang/executing-commands-in-go/
-func run(directory string, build Build) error {
+func (e *BuildJob) Run(directory string, build Build) error {
 
 	fmt.Println("Run command on path", build.Command, directory)
 

@@ -7,10 +7,20 @@ import (
 	"github.com/bradfitz/slice"
 )
 
-func Read(path string, glob string) []BuildFile {
+type Result struct{
+	path string
+}
+
+func NewReader(path string) *Result {
+	return &Result{
+		path: path,
+	}
+}
+
+func (reader *Result) read(glob string) []BuildFile {
 	matches := []BuildFile{}
 
-	filepath.Walk(path, func (path string, file os.FileInfo, err error) error {
+	filepath.Walk(reader.path, func (path string, file os.FileInfo, err error) error {
 		if err != nil {
 			fmt.Println(err)
 			return nil
@@ -28,7 +38,7 @@ func Read(path string, glob string) []BuildFile {
 		}
 
 		if matched {
-			build := Parser(path)
+			build := Parser(path).parse()
 			matches = append(matches, *build)
 		}
 

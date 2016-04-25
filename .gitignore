@@ -12,6 +12,8 @@ _obj
 _test
 bin/*
 !bin/.gitkeep
+build/*
+!build/.gitkeep
 pkg/*
 !pkg/.gitkeep
 src/*

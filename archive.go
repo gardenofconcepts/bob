@@ -10,10 +10,21 @@ import (
 	"compress/gzip"
 )
 
-func Compress(path string, baseDir string, include []string, exclude []string) error {
-	fmt.Println("Archive files", path, baseDir)
+type Archive struct{
+	path string
+}
 
-	tarfile, err := os.Create(path)
+func NewArchive(path string) *Archive {
+	return &Archive{
+		path: path,
+	}
+}
+
+func (archive *Archive) Compress(baseDir string, include []string, exclude []string) error {
+
+	fmt.Println("Archive files", archive.path, baseDir)
+
+	tarfile, err := os.Create(archive.path)
 
 	if err != nil {
 		return err
@@ -68,10 +79,10 @@ func Compress(path string, baseDir string, include []string, exclude []string) e
 	return nil
 }
 
-func Extract(src string, dest string) error {
-	fmt.Println("Extract file to directory", src, dest)
+func (archive *Archive) Extract(dest string) error {
+	fmt.Println("Extract file to directory", archive.path, dest)
 
-	fd, err := os.Open(src)
+	fd, err := os.Open(archive.path)
 	if err != nil {
 		return err
 	}
