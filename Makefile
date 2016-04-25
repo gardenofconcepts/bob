@@ -19,3 +19,4 @@ init: main.go
 	go get gopkg.in/yaml.v2
 	go get github.com/bradfitz/slice
 	go get github.com/bmatcuk/doublestar
+	go get github.com/aws/aws-sdk-go
