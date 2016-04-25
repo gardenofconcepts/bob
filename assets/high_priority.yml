@@ -1,0 +1,15 @@
+name: blubpuuups
+priority: 1
+verify:
+  include:
+    - "**/*.js"
+    - "**/*.yml"
+  exclude:
+    - "exclude/*"
+package:
+  include:
+    - "**"
+  exclude:
+    - "ne/**"
+build:
+  - command: gulp install

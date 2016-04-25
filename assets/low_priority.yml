@@ -1,0 +1,15 @@
+name: babedebibi
+priority: 1012
+verify:
+  include:
+    - "blub/*.txt"
+    - "foo/bar.txt"
+  exclude:
+    - "include/*"
+package:
+  include:
+    - "**"
+  exclude:
+    - "blubb/**"
+build:
+  - command: gulp install
