@@ -1,16 +1,16 @@
 package main
 
 import (
-	"io"
 	"archive/tar"
+	"compress/gzip"
+	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
-	"fmt"
-	"compress/gzip"
 )
 
-type Archive struct{
+type Archive struct {
 	path string
 }
 

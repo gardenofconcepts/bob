@@ -2,12 +2,12 @@ package main
 
 import (
 	"fmt"
+	"github.com/bradfitz/slice"
 	"os"
 	"path/filepath"
-	"github.com/bradfitz/slice"
 )
 
-type Result struct{
+type Result struct {
 	path string
 }
 
@@ -20,7 +20,7 @@ func NewReader(path string) *Result {
 func (reader *Result) read(glob string) []BuildFile {
 	matches := []BuildFile{}
 
-	filepath.Walk(reader.path, func (path string, file os.FileInfo, err error) error {
+	filepath.Walk(reader.path, func(path string, file os.FileInfo, err error) error {
 		if err != nil {
 			fmt.Println(err)
 			return nil
@@ -46,7 +46,7 @@ func (reader *Result) read(glob string) []BuildFile {
 	})
 
 	slice.Sort(matches[:], func(i, j int) bool {
-	    return matches[i].Priority < matches[j].Priority
+		return matches[i].Priority < matches[j].Priority
 	})
 
 	return matches

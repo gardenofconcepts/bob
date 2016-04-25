@@ -1,11 +1,11 @@
 package main
 
 import (
-	"os"
-	"io"
-	"strings"
 	"crypto/md5"
 	"encoding/hex"
+	"io"
+	"os"
+	"strings"
 )
 
 func hashFile(filePath string) (string, error) {

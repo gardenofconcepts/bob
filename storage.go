@@ -6,20 +6,20 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	"os"
 	"log"
+	"os"
 	"time"
 )
 
-type Session struct{
-	instance	*session.Session
-	bucket		string
+type Session struct {
+	instance *session.Session
+	bucket   string
 }
 
 func Storage(region, bucket string) *Session {
 	return &Session{
-		instance: 	session.New(&aws.Config{Region: aws.String(region)}),
-		bucket:		bucket,
+		instance: session.New(&aws.Config{Region: aws.String(region)}),
+		bucket:   bucket,
 	}
 }
 
@@ -34,7 +34,7 @@ func (svc *Session) Has(build BuildFile) bool {
 	fmt.Println("Checking storage for hash", build.Hash)
 
 	params := &s3.HeadObjectInput{
-		Bucket:	aws.String(svc.bucket),
+		Bucket: aws.String(svc.bucket),
 		Key:    aws.String(build.Hash),
 	}
 
@@ -48,7 +48,7 @@ func (svc *Session) Has(build BuildFile) bool {
 
 	fmt.Println("Build found", resp)
 
-	return true;
+	return true
 }
 
 func (svc *Session) Get(build BuildFile) error {
@@ -88,17 +88,16 @@ func (svc *Session) Put(build BuildFile) error {
 
 	defer file.Close()
 
-
-	uploader 	:= s3manager.NewUploader(svc.instance)
-	hostname, _ 	:= os.Hostname()
-	result, err 	:= uploader.Upload(&s3manager.UploadInput{
-		Bucket: 	aws.String(svc.bucket),
-		Key:    	aws.String(build.Hash),
-		Body:   	file,
-		Metadata:	map[string]*string{
-			"Name":		aws.String(build.Name),
-			"Creator": 	aws.String(hostname),
-			"CreatedAt":	aws.String(time.Now().Format(time.RFC850)),
+	uploader := s3manager.NewUploader(svc.instance)
+	hostname, _ := os.Hostname()
+	result, err := uploader.Upload(&s3manager.UploadInput{
+		Bucket: aws.String(svc.bucket),
+		Key:    aws.String(build.Hash),
+		Body:   file,
+		Metadata: map[string]*string{
+			"Name":      aws.String(build.Name),
+			"Creator":   aws.String(hostname),
+			"CreatedAt": aws.String(time.Now().Format(time.RFC850)),
 		},
 	})
 

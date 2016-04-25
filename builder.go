@@ -1,8 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"bytes"
+	"fmt"
 	"os/exec"
 )
 
@@ -29,9 +29,9 @@ func (e *BuildJob) Run(directory string, build Build) error {
 
 	var out bytes.Buffer
 
-	cmd 		:= exec.Command(build.Command)
-	cmd.Dir 	= directory
-	cmd.Stdout	= &out
+	cmd := exec.Command(build.Command)
+	cmd.Dir = directory
+	cmd.Stdout = &out
 
 	err := cmd.Run()
 

@@ -2,15 +2,15 @@ package main
 
 import (
 	"fmt"
-	"path/filepath"
 	"os"
+	"path/filepath"
 )
 
 func Analyzer(directory string, include []string, exclude []string) (string, error) {
-	fmt.Println("Analyze directory", directory);
+	fmt.Println("Analyze directory", directory)
 
-	hashes		:= read(directory, include, exclude)
-	hash, err	:= hashList(hashes)
+	hashes := read(directory, include, exclude)
+	hash, err := hashList(hashes)
 
 	return hash, err
 }
@@ -18,7 +18,7 @@ func Analyzer(directory string, include []string, exclude []string) (string, err
 func read(path string, include []string, exclude []string) []string {
 	hashes := []string{}
 
-	filepath.Walk(path, func (path string, file os.FileInfo, err error) error {
+	filepath.Walk(path, func(path string, file os.FileInfo, err error) error {
 		if err != nil {
 			fmt.Println(err)
 			return nil

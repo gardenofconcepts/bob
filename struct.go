@@ -1,27 +1,27 @@
 package main
 
 type Build struct {
-	Command		string		`json:"command"`
+	Command string `json:"command"`
 }
 
 type Verify struct {
-	Include		[]string	`json:"include"`
-	Exclude		[]string	`json:"exclude"`
+	Include []string `json:"include"`
+	Exclude []string `json:"exclude"`
 }
 
 type Package struct {
-	Include		[]string	`json:"include"`
-	Exclude		[]string	`json:"exclude"`
+	Include []string `json:"include"`
+	Exclude []string `json:"exclude"`
 }
 
 type BuildFile struct {
-	File	 	string
-	Directory 	string
-	Hash		string
-	Archive		string
-	Name		string		`json:"name"`
-	Priority	int		`json:"priority"`
-	Verify		Verify		`json:"verify"`
-	Package		Package		`json:"package"`
-	Build		[]Build		`json:"build"`
+	File      string
+	Directory string
+	Hash      string
+	Archive   string
+	Name      string  `json:"name"`
+	Priority  int     `json:"priority"`
+	Verify    Verify  `json:"verify"`
+	Package   Package `json:"package"`
+	Build     []Build `json:"build"`
 }

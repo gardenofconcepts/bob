@@ -1,4 +1,4 @@
-.PHONY: clean test run make
+.PHONY: clean test run make cleancode
 
 DIR = $(shell pwd)
 
@@ -24,5 +24,9 @@ init: main.go
 	go get github.com/bradfitz/slice
 	go get github.com/bmatcuk/doublestar
 	go get github.com/aws/aws-sdk-go
+
+cleancode:
+	cd "$(DIR)"
+	gofmt -w *.go
 
 default: build

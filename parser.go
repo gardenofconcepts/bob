@@ -1,18 +1,18 @@
 package main
 
 import (
+	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
-	"gopkg.in/yaml.v2"
 	"path/filepath"
 )
 
 func Parser(path string) *BuildFile {
 	return &BuildFile{
-		File		: path,
-		Directory	: filepath.Dir(path),
-		Priority	: 0,
-		Name		: "Unknown",
+		File:      path,
+		Directory: filepath.Dir(path),
+		Priority:  0,
+		Name:      "Unknown",
 	}
 }
 
