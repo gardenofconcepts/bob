@@ -27,19 +27,23 @@ func (e *BuildJob) Run(directory string, build Build) error {
 
 	log.Info("Run command on path", build.Command, directory)
 
-	var out bytes.Buffer
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
 
-	cmd := exec.Command(build.Command)
+	cmd := exec.Command("/bin/bash", "-c", build.Command)
 	cmd.Dir = directory
-	cmd.Stdout = &out
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
 
 	err := cmd.Run()
 
 	if err != nil {
+		log.Fatal("Error while running command", err, stdout.String(), stderr.String())
+
 		return err
 	}
 
-	log.Debugf("Result: %q\n", out.String())
+	log.Debugf("Result: %q\n", stdout.String())
 
 	return nil
 }
