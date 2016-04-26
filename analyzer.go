@@ -15,10 +15,10 @@ func Analyzer(directory string, include []string, exclude []string) (string, err
 	return hash, err
 }
 
-func read(path string, include []string, exclude []string) []string {
+func read(baseDir string, includes []string, excludes []string) []string {
 	hashes := []string{}
 
-	filepath.Walk(path, func(path string, file os.FileInfo, err error) error {
+	filepath.Walk(baseDir, func(filePath string, file os.FileInfo, err error) error {
 		if err != nil {
 			log.Warning(err)
 			return nil
@@ -28,13 +28,13 @@ func read(path string, include []string, exclude []string) []string {
 			return nil
 		}
 
-		if match(include, path) && !match(exclude, path) {
-			hash, _ := hashFile(path)
+		if matchList(includes, filePath, baseDir) && !matchList(excludes, filePath, baseDir) {
+			hash, _ := hashFile(filePath)
 			hashes = append(hashes, hash)
 
-			log.Debug("Include file with hash", path, hash)
+			log.Debug("Include file with hash", filePath, hash)
 		} else {
-			log.Debug("Skip file", path)
+			log.Debug("Skip file", filePath)
 		}
 
 		return nil

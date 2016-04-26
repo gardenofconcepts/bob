@@ -8,8 +8,6 @@ verify:
     - "exclude/*"
 package:
   include:
-    - "**"
-  exclude:
-    - "ne/**"
+    - "src/**"
 build:
-  - command: pwd assets
+  - command: /bin/mkdir -pv blubblub

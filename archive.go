@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"errors"
 )
 
 type Archive struct {
@@ -20,10 +21,11 @@ func NewArchive(path string) *Archive {
 	}
 }
 
-func (archive *Archive) Compress(baseDir string, include []string, exclude []string) error {
+func (archive *Archive) Compress(baseDir string, includes []string, excludes []string) error {
 
 	log.Info("Archive files", archive.path, baseDir)
 
+	files :=0
 	tarfile, err := os.Create(archive.path)
 
 	if err != nil {
@@ -36,7 +38,7 @@ func (archive *Archive) Compress(baseDir string, include []string, exclude []str
 
 	defer tarball.Close()
 
-	filepath.Walk(baseDir, func(path string, info os.FileInfo, err error) error {
+	filepath.Walk(baseDir, func(filePath string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -45,11 +47,11 @@ func (archive *Archive) Compress(baseDir string, include []string, exclude []str
 			return nil
 		}
 
-		if !match(include, path) || match(exclude, path) {
+		if !matchList(includes, filePath, baseDir) || matchList(excludes, filePath, baseDir) {
 			return nil
 		}
 
-		log.Debug("Add file to archive", path)
+		log.Debug("Add file to archive", filePath)
 
 		header, err := tar.FileInfoHeader(info, info.Name())
 
@@ -58,14 +60,14 @@ func (archive *Archive) Compress(baseDir string, include []string, exclude []str
 		}
 
 		if baseDir != "" {
-			header.Name = strings.TrimPrefix(path, baseDir)
+			header.Name = strings.TrimPrefix(filePath, baseDir)
 		}
 
 		if err := tarball.WriteHeader(header); err != nil {
 			return err
 		}
 
-		file, err := os.Open(path)
+		file, err := os.Open(filePath)
 
 		if err != nil {
 			return err
@@ -75,8 +77,16 @@ func (archive *Archive) Compress(baseDir string, include []string, exclude []str
 
 		_, err = io.Copy(tarball, file)
 
+		files++
+
 		return err
 	})
+
+	if files == 0 {
+		log.Fatal("Archive contains no files")
+
+		errors.New("Archive contains no files")
+	}
 
 	return nil
 }
