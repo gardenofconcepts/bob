@@ -1,10 +1,16 @@
-.PHONY: build clean test run make cleancode init
+.PHONY: build clean test run make cleancode init dist
 
 DIR = $(shell pwd)
 
 build:
 	cd "$(DIR)"
 	go build -o bin/builder *.go
+
+dist:
+    # GOARCH=386 = 32bit
+	env GOOS=linux   GOARCH=amd64 go build -o bin/linux/amd64/builder *.go
+	env GOOS=darwin  GOARCH=amd64 go build -o bin/darwin/amd64/builder *.go
+	env GOOS=windows GOARCH=amd64 go build -o bin/windows/amd64/builder *.go
 
 run:
 	cd "$(DIR)"
