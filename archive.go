@@ -45,9 +45,11 @@ func (archive *Archive) Compress(baseDir string, include []string, exclude []str
 			return nil
 		}
 
-		if !match(include, path) && match(exclude, path) {
+		if !match(include, path) || match(exclude, path) {
 			return nil
 		}
+
+		log.Debug("Add file to archive", path)
 
 		header, err := tar.FileInfoHeader(info, info.Name())
 
