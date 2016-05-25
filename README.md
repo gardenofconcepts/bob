@@ -36,3 +36,10 @@ Linux, OS X, or Unix, or at `C:\Users\USERNAME \.aws\credentials` on Windows.
             Enable verbose mode (Log level: info)
       -version
             Show version
+
+## Build
+
+Run ``make`` to build binaries:
+
+    make init
+    make build
