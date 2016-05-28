@@ -11,6 +11,9 @@ dist:
 	env GOOS=linux   GOARCH=amd64 go build -o bin/linux/amd64/builder *.go
 	env GOOS=darwin  GOARCH=amd64 go build -o bin/darwin/amd64/builder *.go
 	env GOOS=windows GOARCH=amd64 go build -o bin/windows/amd64/builder *.go
+	tar -C bin/linux/amd64 -cvzf build/builder_linux_amd64.tar.gz builder
+	tar -C bin/darwin/amd64 -cvzf build/builder_darwin_amd64.tar.gz builder
+	tar -C bin/windows/amd64 -cvzf build/builder_windows_amd64.tar.gz builder
 
 run:
 	cd "$(DIR)"
