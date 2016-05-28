@@ -9,11 +9,11 @@
 
 Expected environment variables:
 
-* AWS_ACCESS_KEY_ID
-* AWS_SECRET_ACCESS_KEY
+* `AWS_ACCESS_KEY_ID`
+* `AWS_SECRET_ACCESS_KEY`
 
 Alternative: The AWS credentials file – located at `~/.aws/credentials` on
-Linux, OS X, or Unix, or at `C:\Users\USERNAME \.aws\credentials` on Windows.
+Linux, OS X, or Unix, or at `C:\Users\USERNAME\.aws\credentials` on Windows.
 
 ## Arguments
 
@@ -41,5 +41,11 @@ Linux, OS X, or Unix, or at `C:\Users\USERNAME \.aws\credentials` on Windows.
 
 Run ``make`` to build binaries:
 
+    export GOPATH=`pwd`
     make init
     make build
+
+## Golang setup (OS X)
+
+    brew update
+    brew install go

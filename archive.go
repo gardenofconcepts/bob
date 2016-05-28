@@ -26,25 +26,24 @@ func (archive *Archive) Compress(baseDir string, includes []string, excludes []s
 	log.Info("Archive files", archive.path, baseDir)
 
 	files :=0
-	tarfile, err := os.Create(archive.path)
+
+	file, err := os.Create(archive.path)
 
 	if err != nil {
 		return err
 	}
 
-	defer tarfile.Close()
+	defer file.Close()
 
-	tarball := tar.NewWriter(tarfile)
+	gzipWriter := gzip.NewWriter(file)
+	defer gzipWriter.Close()
 
-	defer tarball.Close()
+	tarWriter := tar.NewWriter(gzipWriter)
+	defer tarWriter.Close()
 
 	filepath.Walk(baseDir, func(filePath string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
-		}
-
-		if info.IsDir() {
-			return nil
 		}
 
 		if !matchList(includes, filePath, baseDir) || matchList(excludes, filePath, baseDir) {
@@ -60,11 +59,15 @@ func (archive *Archive) Compress(baseDir string, includes []string, excludes []s
 		}
 
 		if baseDir != "" {
-			header.Name = strings.TrimPrefix(filePath, baseDir)
+			header.Name = filepath.Join(baseDir, strings.TrimPrefix(filePath, baseDir))
 		}
 
-		if err := tarball.WriteHeader(header); err != nil {
+		if err := tarWriter.WriteHeader(header); err != nil {
 			return err
+		}
+
+		if info.IsDir() {
+			return nil
 		}
 
 		file, err := os.Open(filePath)
@@ -75,7 +78,7 @@ func (archive *Archive) Compress(baseDir string, includes []string, excludes []s
 
 		defer file.Close()
 
-		_, err = io.Copy(tarball, file)
+		_, err = io.Copy(tarWriter, file)
 
 		files++
 
@@ -94,34 +97,41 @@ func (archive *Archive) Compress(baseDir string, includes []string, excludes []s
 func (archive *Archive) Extract(dest string) error {
 	log.Info("Extract file to directory", archive.path, dest)
 
-	fd, err := os.Open(archive.path)
+	file, err := os.Open(archive.path)
+
 	if err != nil {
 		return err
 	}
-	defer fd.Close()
 
-	gReader, err := gzip.NewReader(fd)
+	defer file.Close()
+
+	gzipReader, err := gzip.NewReader(file)
+
 	if err != nil {
 		return err
 	}
-	defer gReader.Close()
 
-	tarReader := tar.NewReader(gReader)
+	defer gzipReader.Close()
+
+	tarReader := tar.NewReader(gzipReader)
 
 	for {
-		hdr, err := tarReader.Next()
+		header, err := tarReader.Next()
+
 		if err == io.EOF {
 			break
 		}
+
 		if err != nil {
 			return err
 		}
 
-		if hdr.Name == "." {
+		if header.Name == "." {
 			continue
 		}
 
-		err = extractTarArchiveFile(hdr, dest, tarReader)
+		err = extractTarArchiveFile(header, dest, tarReader)
+
 		if err != nil {
 			return err
 		}
@@ -136,11 +146,13 @@ func extractTarArchiveFile(header *tar.Header, dest string, input io.Reader) err
 
 	if fileInfo.IsDir() {
 		err := os.MkdirAll(filePath, fileInfo.Mode())
+
 		if err != nil {
 			return err
 		}
 	} else {
 		err := os.MkdirAll(filepath.Dir(filePath), 0755)
+
 		if err != nil {
 			return err
 		}
@@ -150,12 +162,15 @@ func extractTarArchiveFile(header *tar.Header, dest string, input io.Reader) err
 		}
 
 		fileCopy, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, fileInfo.Mode())
+
 		if err != nil {
 			return err
 		}
+
 		defer fileCopy.Close()
 
 		_, err = io.Copy(fileCopy, input)
+
 		if err != nil {
 			return err
 		}
