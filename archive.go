@@ -33,11 +33,9 @@ func (archive *Archive) Compress(baseDir string, includes []string, excludes []s
 	files := 0
 
 	file, err := os.Create(archive.path)
-
 	if err != nil {
 		return err
 	}
-
 	defer file.Close()
 
 	gzipWriter := gzip.NewWriter(file)
@@ -46,9 +44,9 @@ func (archive *Archive) Compress(baseDir string, includes []string, excludes []s
 	tarWriter := tar.NewWriter(gzipWriter)
 	defer tarWriter.Close()
 
-	filepath.Walk(baseDir, func(filePath string, fileInfo os.FileInfo, err error) error {
+	err = filepath.Walk(baseDir, func(filePath string, fileInfo os.FileInfo, err error) error {
 		if err != nil {
-			log.Error("Error", err)
+			log.Error("Error reading directory", err)
 
 			return err
 		}
@@ -68,6 +66,14 @@ func (archive *Archive) Compress(baseDir string, includes []string, excludes []s
 		return nil
 	})
 
+	if err != nil {
+		log.WithFields(log.Fields{
+			"cwd":   baseDir,
+			"file":  archive.path,
+			"error": err,
+		}).Fatal("Error creating archive")
+	}
+
 	if files == 0 {
 		log.Fatal("Archive contains no files")
 
@@ -78,7 +84,10 @@ func (archive *Archive) Compress(baseDir string, includes []string, excludes []s
 }
 
 func addNode(baseDir string, filePath string, fileInfo os.FileInfo, tarWriter *tar.Writer) error {
-	log.WithField("file", filePath).Debug("Adding file")
+	log.WithFields(log.Fields{
+		"cwd":  baseDir,
+		"file": filePath,
+	}).Debug("Adding file")
 
 	header, err := tar.FileInfoHeader(fileInfo, filePath)
 
@@ -101,7 +110,7 @@ func addNode(baseDir string, filePath string, fileInfo os.FileInfo, tarWriter *t
 	case tar.TypeLink:
 		return addHardLink(filePath, fileInfo, tarWriter, header)
 	default:
-		log.Fatal("Error while adding; Unkown type: " + string(header.Typeflag))
+		log.Fatal("Error while adding; Unkown type: ", string(header.Typeflag))
 	}
 
 	return nil
@@ -109,7 +118,10 @@ func addNode(baseDir string, filePath string, fileInfo os.FileInfo, tarWriter *t
 
 func addHeader(tarWriter *tar.Writer, header *tar.Header) error {
 	if err := tarWriter.WriteHeader(header); err != nil {
-		log.Error("Cannot write header", err)
+		log.WithFields(log.Fields{
+			"header": header,
+			"error":  err,
+		}).Error("Cannot write header")
 
 		return err
 	}
@@ -126,7 +138,6 @@ func addSymbolicLink(filePath string, fileInfo os.FileInfo, tarWriter *tar.Write
 }
 
 func addDirectory(filePath string, fileInfo os.FileInfo, tarWriter *tar.Writer, header *tar.Header) error {
-	//return addHeader(tarWriter, header)
 	return nil
 }
 
@@ -140,7 +151,6 @@ func addFile(filePath string, fileInfo os.FileInfo, tarWriter *tar.Writer, heade
 	}
 
 	file, err := os.Open(filePath)
-
 	if err != nil {
 		log.WithFields(log.Fields{
 			"file":  filePath,
@@ -149,7 +159,6 @@ func addFile(filePath string, fileInfo os.FileInfo, tarWriter *tar.Writer, heade
 
 		return err
 	}
-
 	defer file.Close()
 
 	if _, err = io.CopyN(tarWriter, file, fileInfo.Size()); err != nil {
@@ -171,23 +180,25 @@ func (archive *Archive) Extract(dest string) error {
 	}).Info("Extracting archive")
 
 	file, err := os.Open(archive.path)
-
 	if err != nil {
-		log.Error("Error 1", err)
+		log.WithFields(log.Fields{
+			"file":  archive.path,
+			"error": err,
+		}).Error("Error while opening archive")
 
 		return err
 	}
-
 	defer file.Close()
 
 	gzipReader, err := gzip.NewReader(file)
-
 	if err != nil {
-		log.Error("Error 2", err)
+		log.WithFields(log.Fields{
+			"file":  archive.path,
+			"error": err,
+		}).Error("Error while reading archive")
 
 		return err
 	}
-
 	defer gzipReader.Close()
 
 	tarReader := tar.NewReader(gzipReader)
@@ -235,21 +246,21 @@ func extractTarArchiveFile(header *tar.Header, dest string, input io.Reader) err
 	return nil
 }
 
-func writeNewFile(fpath string, in io.Reader, fm os.FileMode) error {
-	err := os.MkdirAll(filepath.Dir(fpath), 0755)
+func writeNewFile(filePath string, in io.Reader, fm os.FileMode) error {
+	err := os.MkdirAll(filepath.Dir(filePath), 0755)
 	if err != nil {
 		log.WithFields(log.Fields{
-			"file":  fpath,
+			"file":  filePath,
 			"error": err,
 		}).Error("Making directory for file")
 
 		return err
 	}
 
-	out, err := os.Create(fpath)
+	out, err := os.Create(filePath)
 	if err != nil {
 		log.WithFields(log.Fields{
-			"file":  fpath,
+			"file":  filePath,
 			"error": err,
 		}).Error("Creating new file")
 
@@ -260,7 +271,7 @@ func writeNewFile(fpath string, in io.Reader, fm os.FileMode) error {
 	err = out.Chmod(fm)
 	if err != nil && runtime.GOOS != "windows" {
 		log.WithFields(log.Fields{
-			"file":  fpath,
+			"file":  filePath,
 			"error": err,
 		}).Error("Changing file mode")
 
@@ -270,9 +281,9 @@ func writeNewFile(fpath string, in io.Reader, fm os.FileMode) error {
 	_, err = io.Copy(out, in)
 	if err != nil {
 		log.WithFields(log.Fields{
-			"file":  fpath,
+			"file":  filePath,
 			"error": err,
-		}).Error("Writing file", fpath, err)
+		}).Error("Writing file", filePath, err)
 
 		return err
 	}
@@ -280,21 +291,21 @@ func writeNewFile(fpath string, in io.Reader, fm os.FileMode) error {
 	return nil
 }
 
-func writeNewSymbolicLink(fpath string, target string) error {
-	err := os.MkdirAll(filepath.Dir(fpath), 0755)
+func writeNewSymbolicLink(filePath string, target string) error {
+	err := os.MkdirAll(filepath.Dir(filePath), 0755)
 	if err != nil {
 		log.WithFields(log.Fields{
-			"file":  fpath,
+			"file":  filePath,
 			"error": err,
-		}).Error("Making directory for file", fpath, err)
+		}).Error("Making directory for file", filePath, err)
 
 		return err
 	}
 
-	err = os.Symlink(target, fpath)
+	err = os.Symlink(target, filePath)
 	if err != nil {
 		log.WithFields(log.Fields{
-			"file":   fpath,
+			"file":   filePath,
 			"target": target,
 			"error":  err,
 		}).Error("Making symbolic link")
@@ -305,23 +316,23 @@ func writeNewSymbolicLink(fpath string, target string) error {
 	return nil
 }
 
-func writeNewHardLink(fpath string, target string) error {
-	err := os.MkdirAll(filepath.Dir(fpath), 0755)
+func writeNewHardLink(filePath string, target string) error {
+	err := os.MkdirAll(filepath.Dir(filePath), 0755)
 	if err != nil {
 		log.WithFields(log.Fields{
-			"file":  fpath,
+			"file":  filePath,
 			"error": err,
 		}).Error("Making directory for file")
 
 		return err
 	}
 
-	err = os.Link(target, fpath)
+	err = os.Link(target, filePath)
 	if err != nil {
 		log.WithFields(log.Fields{
-			"file":  fpath,
+			"file":  filePath,
 			"error": err,
-		}).Error("Making hard link", fpath, err)
+		}).Error("Making hard link", filePath, err)
 
 		return err
 	}

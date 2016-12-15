@@ -1,13 +1,15 @@
 .PHONY: build clean test run make cleancode init dist
 
 DIR = $(shell pwd)
+REVISION = $(shell git rev-parse --short HEAD)
 
 build:
 	cd "$(DIR)"
 	go build -o bin/builder *.go
 
 dist:
-    # GOARCH=386 = 32bit
+	# GOARCH=386 = 32bit
+	sed -i -r 's/^(const APP_BUILD string = )"([a-zA-Z0-9]+)"/\1"$(REVISION)"/' version.go
 	env GOOS=linux   GOARCH=amd64 go build -o bin/linux/amd64/builder *.go
 	env GOOS=darwin  GOARCH=amd64 go build -o bin/darwin/amd64/builder *.go
 	env GOOS=windows GOARCH=amd64 go build -o bin/windows/amd64/builder *.go
