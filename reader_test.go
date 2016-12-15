@@ -1,9 +1,14 @@
 package main
 
-import "testing"
+import (
+	log "github.com/Sirupsen/logrus"
+	"testing"
+)
 
 func TestReader(t *testing.T) {
-	builds := NewReader("assets").read("*.build.yml")
+	log.SetLevel(log.DebugLevel)
+
+	builds := NewReader("assets").read("*.build.yml", []string{"**"}, []string{"**/exclude"})
 
 	if len(builds) != 2 {
 		t.Error("Expected 2, got ", len(builds))

@@ -17,11 +17,14 @@ Linux, OS X, or Unix, or at `C:\Users\USERNAME\.aws\credentials` on Windows.
 
 ## Arguments
 
-    Usage of ./bin/builder:
       -debug
             Enable debug mode (Log level: debug)
+      -exclude string
+            Excludes directories with this pattern (e.g. **/node_modules/**,.git)
       -force
             Rebuild data without checking remote
+      -include string
+            Pattern for directory traversal (default "**")
       -pattern string
             File pattern for build files (default "*.build.yml")
       -s3-bucket string

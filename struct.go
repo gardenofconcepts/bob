@@ -29,6 +29,8 @@ type BuildFile struct {
 type App struct {
 	path         string
 	pattern      string
+	include      []string
+	exclude      []string
 	debug        bool
 	verbose      bool
 	force        bool

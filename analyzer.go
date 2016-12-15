@@ -7,7 +7,11 @@ import (
 )
 
 func Analyzer(directory string, include []string, exclude []string) (string, error) {
-	log.Info("Analyze directory", directory)
+	log.WithFields(log.Fields{
+		"cwd":     directory,
+		"include": include,
+		"exclude": exclude,
+	}).Info("Analyzing directory")
 
 	hashes := read(directory, include, exclude)
 	hash, err := hashList(hashes)
@@ -32,9 +36,12 @@ func read(baseDir string, includes []string, excludes []string) []string {
 			hash, _ := hashFile(filePath)
 			hashes = append(hashes, hash)
 
-			log.Debug("Include file with hash", filePath, hash)
+			log.WithFields(log.Fields{
+				"file": filePath,
+				"hash": hash,
+			}).Debug("Include file with hash")
 		} else {
-			log.Debug("Skip file", filePath)
+			log.WithField("file", filePath).Debug("Skip file")
 		}
 
 		return nil

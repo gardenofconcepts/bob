@@ -13,9 +13,6 @@ func Builder() *BuildJob {
 }
 
 func (e *BuildJob) Build(directory string, builds []Build) {
-
-	log.Info("Starting build process...")
-
 	for _, build := range builds {
 		e.Run(directory, build)
 	}
@@ -25,7 +22,10 @@ func (e *BuildJob) Build(directory string, builds []Build) {
 // http://www.darrencoxall.com/golang/executing-commands-in-go/
 func (e *BuildJob) Run(directory string, build Build) error {
 
-	log.Info("Run command on path", build.Command, directory)
+	log.WithFields(log.Fields{
+		"cmd": build.Command,
+		"cwd": directory,
+	}).Info("Executing build process")
 
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer

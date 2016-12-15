@@ -17,8 +17,13 @@ func NewReader(path string) *Result {
 	}
 }
 
-func (reader *Result) read(glob string) []BuildFile {
+func (reader *Result) read(glob string, includes []string, excludes []string) []BuildFile {
 	matches := []BuildFile{}
+
+	log.WithFields(log.Fields{
+		"path":    reader.path,
+		"pattern": glob,
+	}).Info("Searching for build files")
 
 	filepath.Walk(reader.path, func(path string, file os.FileInfo, err error) error {
 		if err != nil {
@@ -27,9 +32,21 @@ func (reader *Result) read(glob string) []BuildFile {
 			return nil
 		}
 
+		if file.IsDir() && (!matchList(includes, path, reader.path) || matchList(excludes, path, reader.path)) {
+			log.WithFields(log.Fields{
+				"path":     path,
+				"includes": includes,
+				"excludes": excludes,
+			}).Info("Skipping directory")
+
+			return filepath.SkipDir
+		}
+
 		if file.IsDir() {
 			return nil
 		}
+
+		log.WithField("path", path).Debug("Search")
 
 		matched, err := filepath.Match(glob, file.Name())
 
@@ -42,6 +59,13 @@ func (reader *Result) read(glob string) []BuildFile {
 		if matched {
 			build := Parser(path).parse()
 			matches = append(matches, *build)
+
+			log.WithFields(log.Fields{
+				"file":      build.File,
+				"directory": build.Directory,
+				"name":      build.Name,
+				"priority":  build.Priority,
+			}).Info("Found build")
 		}
 
 		return nil

@@ -18,9 +18,13 @@ func matchList(patterns []string, path string, baseDir string) bool {
 
 func match(pattern string, path string, baseDir string) bool {
 	path, _ = filepath.Rel(baseDir, path)
-	matched, _ := doublestar.Match(pattern, path)
+	result, _ := doublestar.Match(pattern, path)
 
-	log.Debug("Match file against pattern with result", path, pattern, matched)
+	log.WithFields(log.Fields{
+		"file":    path,
+		"pattern": pattern,
+		"result":  result,
+	}).Debug("Matching file pattern")
 
-	return matched
+	return result
 }

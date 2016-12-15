@@ -3,12 +3,13 @@ package main
 import (
 	"archive/tar"
 	"compress/gzip"
+	"errors"
 	log "github.com/Sirupsen/logrus"
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
-	"errors"
 )
 
 type Archive struct {
@@ -22,10 +23,14 @@ func NewArchive(path string) *Archive {
 }
 
 func (archive *Archive) Compress(baseDir string, includes []string, excludes []string) error {
+	log.WithFields(log.Fields{
+		"cwd":      baseDir,
+		"file":     archive.path,
+		"includes": includes,
+		"excludes": excludes,
+	}).Info("Packaging files")
 
-	log.Info("Archive files", archive.path, baseDir)
-
-	files :=0
+	files := 0
 
 	file, err := os.Create(archive.path)
 
@@ -41,48 +46,26 @@ func (archive *Archive) Compress(baseDir string, includes []string, excludes []s
 	tarWriter := tar.NewWriter(gzipWriter)
 	defer tarWriter.Close()
 
-	filepath.Walk(baseDir, func(filePath string, info os.FileInfo, err error) error {
+	filepath.Walk(baseDir, func(filePath string, fileInfo os.FileInfo, err error) error {
 		if err != nil {
+			log.Error("Error", err)
+
 			return err
 		}
 
 		if !matchList(includes, filePath, baseDir) || matchList(excludes, filePath, baseDir) {
+			log.WithField("file", filePath).Debug("Skipping file")
+
 			return nil
 		}
 
-		log.Debug("Add file to archive", filePath)
-
-		header, err := tar.FileInfoHeader(info, info.Name())
-
-		if err != nil {
+		if err := addNode(baseDir, filePath, fileInfo, tarWriter); err != nil {
 			return err
 		}
-
-		if baseDir != "" {
-			header.Name = filepath.Join(baseDir, strings.TrimPrefix(filePath, baseDir))
-		}
-
-		if err := tarWriter.WriteHeader(header); err != nil {
-			return err
-		}
-
-		if info.IsDir() {
-			return nil
-		}
-
-		file, err := os.Open(filePath)
-
-		if err != nil {
-			return err
-		}
-
-		defer file.Close()
-
-		_, err = io.Copy(tarWriter, file)
 
 		files++
 
-		return err
+		return nil
 	})
 
 	if files == 0 {
@@ -94,12 +77,104 @@ func (archive *Archive) Compress(baseDir string, includes []string, excludes []s
 	return nil
 }
 
+func addNode(baseDir string, filePath string, fileInfo os.FileInfo, tarWriter *tar.Writer) error {
+	log.WithField("file", filePath).Debug("Adding file")
+
+	header, err := tar.FileInfoHeader(fileInfo, filePath)
+
+	if err != nil {
+		log.Error("Cannot read header", err)
+
+		return err
+	}
+
+	// To store relative paths
+	header.Name = strings.TrimPrefix(filePath, baseDir+string(filepath.Separator))
+
+	switch header.Typeflag {
+	case tar.TypeDir:
+		return addDirectory(filePath, fileInfo, tarWriter, header)
+	case tar.TypeReg, tar.TypeRegA:
+		return addFile(filePath, fileInfo, tarWriter, header)
+	case tar.TypeSymlink:
+		return addSymbolicLink(filePath, fileInfo, tarWriter, header)
+	case tar.TypeLink:
+		return addHardLink(filePath, fileInfo, tarWriter, header)
+	default:
+		log.Fatal("Error while adding; Unkown type: " + string(header.Typeflag))
+	}
+
+	return nil
+}
+
+func addHeader(tarWriter *tar.Writer, header *tar.Header) error {
+	if err := tarWriter.WriteHeader(header); err != nil {
+		log.Error("Cannot write header", err)
+
+		return err
+	}
+
+	return nil
+}
+
+func addSymbolicLink(filePath string, fileInfo os.FileInfo, tarWriter *tar.Writer, header *tar.Header) error {
+	symlinkTarget, _ := os.Readlink(filePath)
+
+	header.Linkname = symlinkTarget
+
+	return addHeader(tarWriter, header)
+}
+
+func addDirectory(filePath string, fileInfo os.FileInfo, tarWriter *tar.Writer, header *tar.Header) error {
+	//return addHeader(tarWriter, header)
+	return nil
+}
+
+func addHardLink(filePath string, fileInfo os.FileInfo, tarWriter *tar.Writer, header *tar.Header) error {
+	return addHeader(tarWriter, header)
+}
+
+func addFile(filePath string, fileInfo os.FileInfo, tarWriter *tar.Writer, header *tar.Header) error {
+	if err := addHeader(tarWriter, header); err != nil {
+		return err
+	}
+
+	file, err := os.Open(filePath)
+
+	if err != nil {
+		log.WithFields(log.Fields{
+			"file":  filePath,
+			"error": err,
+		}).Error("Cannot open file")
+
+		return err
+	}
+
+	defer file.Close()
+
+	if _, err = io.CopyN(tarWriter, file, fileInfo.Size()); err != nil {
+		log.WithFields(log.Fields{
+			"file":  filePath,
+			"error": err,
+		}).Error("Cannot copy file")
+
+		return err
+	}
+
+	return nil
+}
+
 func (archive *Archive) Extract(dest string) error {
-	log.Info("Extract file to directory", archive.path, dest)
+	log.WithFields(log.Fields{
+		"file": archive.path,
+		"cwd":  dest,
+	}).Info("Extracting archive")
 
 	file, err := os.Open(archive.path)
 
 	if err != nil {
+		log.Error("Error 1", err)
+
 		return err
 	}
 
@@ -108,6 +183,8 @@ func (archive *Archive) Extract(dest string) error {
 	gzipReader, err := gzip.NewReader(file)
 
 	if err != nil {
+		log.Error("Error 2", err)
+
 		return err
 	}
 
@@ -130,9 +207,7 @@ func (archive *Archive) Extract(dest string) error {
 			continue
 		}
 
-		err = extractTarArchiveFile(header, dest, tarReader)
-
-		if err != nil {
+		if err = extractTarArchiveFile(header, dest, tarReader); err != nil {
 			return err
 		}
 	}
@@ -141,39 +216,128 @@ func (archive *Archive) Extract(dest string) error {
 }
 
 func extractTarArchiveFile(header *tar.Header, dest string, input io.Reader) error {
-	filePath := filepath.Join(dest, header.Name)
-	fileInfo := header.FileInfo()
+	switch header.Typeflag {
+	case tar.TypeDir:
+		return writeNewDirectory(filepath.Join(dest, header.Name))
+	case tar.TypeReg, tar.TypeRegA:
+		return writeNewFile(filepath.Join(dest, header.Name), input, header.FileInfo().Mode().Perm())
+	case tar.TypeSymlink:
+		return writeNewSymbolicLink(filepath.Join(dest, header.Name), header.Linkname)
+	case tar.TypeLink:
+		return writeNewHardLink(filepath.Join(dest, header.Name), filepath.Join(dest, header.Linkname))
+	default:
+		log.WithFields(log.Fields{
+			"file": header.Name,
+			"type": header.Typeflag,
+		}).Error("Unknown type flag")
+	}
 
-	if fileInfo.IsDir() {
-		err := os.MkdirAll(filePath, fileInfo.Mode())
+	return nil
+}
 
-		if err != nil {
-			return err
-		}
-	} else {
-		err := os.MkdirAll(filepath.Dir(filePath), 0755)
+func writeNewFile(fpath string, in io.Reader, fm os.FileMode) error {
+	err := os.MkdirAll(filepath.Dir(fpath), 0755)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"file":  fpath,
+			"error": err,
+		}).Error("Making directory for file")
 
-		if err != nil {
-			return err
-		}
+		return err
+	}
 
-		if fileInfo.Mode()&os.ModeSymlink != 0 {
-			return os.Symlink(header.Linkname, filePath)
-		}
+	out, err := os.Create(fpath)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"file":  fpath,
+			"error": err,
+		}).Error("Creating new file")
 
-		fileCopy, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, fileInfo.Mode())
+		return err
+	}
+	defer out.Close()
 
-		if err != nil {
-			return err
-		}
+	err = out.Chmod(fm)
+	if err != nil && runtime.GOOS != "windows" {
+		log.WithFields(log.Fields{
+			"file":  fpath,
+			"error": err,
+		}).Error("Changing file mode")
 
-		defer fileCopy.Close()
+		return err
+	}
 
-		_, err = io.Copy(fileCopy, input)
+	_, err = io.Copy(out, in)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"file":  fpath,
+			"error": err,
+		}).Error("Writing file", fpath, err)
 
-		if err != nil {
-			return err
-		}
+		return err
+	}
+
+	return nil
+}
+
+func writeNewSymbolicLink(fpath string, target string) error {
+	err := os.MkdirAll(filepath.Dir(fpath), 0755)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"file":  fpath,
+			"error": err,
+		}).Error("Making directory for file", fpath, err)
+
+		return err
+	}
+
+	err = os.Symlink(target, fpath)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"file":   fpath,
+			"target": target,
+			"error":  err,
+		}).Error("Making symbolic link")
+
+		return err
+	}
+
+	return nil
+}
+
+func writeNewHardLink(fpath string, target string) error {
+	err := os.MkdirAll(filepath.Dir(fpath), 0755)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"file":  fpath,
+			"error": err,
+		}).Error("Making directory for file")
+
+		return err
+	}
+
+	err = os.Link(target, fpath)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"file":  fpath,
+			"error": err,
+		}).Error("Making hard link", fpath, err)
+
+		return err
+	}
+
+	return nil
+}
+
+func writeNewDirectory(dirPath string) error {
+	err := os.MkdirAll(dirPath, 0755)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"file":  dirPath,
+			"error": err,
+		}).Error("Making directory")
+
+		return err
 	}
 
 	return nil

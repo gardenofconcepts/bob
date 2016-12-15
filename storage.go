@@ -23,8 +23,10 @@ func S3Storage(region, bucket string) *Storage {
 }
 
 func (svc *Storage) Has(build BuildFile) bool {
-
-	log.Info("Checking storage for hash", build.Hash)
+	log.WithFields(log.Fields{
+		"bucket": svc.bucket,
+		"hash":   build.Hash,
+	}).Info("Checking storage for existing build")
 
 	params := &s3.HeadObjectInput{
 		Bucket: aws.String(svc.bucket),
@@ -34,12 +36,17 @@ func (svc *Storage) Has(build BuildFile) bool {
 	resp, err := s3.New(svc.instance).HeadObject(params)
 
 	if err != nil {
-		log.Warning("Build not found")
+		log.WithFields(log.Fields{
+			"bucket": svc.bucket,
+			"hash":   build.Hash,
+		}).Warning("Build not found")
 
 		return false
 	}
 
-	log.Info("Build found", resp)
+	log.WithFields(log.Fields{
+		"data": resp,
+	}).Info("Found existing build")
 
 	return true
 }
@@ -65,12 +72,18 @@ func (svc *Storage) Get(build BuildFile) {
 		log.Fatal("Cannot download build", err)
 	}
 
-	log.Info("Downloaded file", file.Name(), numBytes, "bytes")
+	log.WithFields(log.Fields{
+		"file":  file.Name(),
+		"bytes": numBytes,
+	}).Info("Downloaded file")
 }
 
 func (svc *Storage) Put(build BuildFile) {
 
-	log.Info("Upload archive", build.Archive, build.Hash)
+	log.WithFields(log.Fields{
+		"file": build.Archive,
+		"hash": build.Hash,
+	}).Info("Uploading archive")
 
 	file, err := os.Open(build.Archive)
 
@@ -97,5 +110,7 @@ func (svc *Storage) Put(build BuildFile) {
 		log.Fatal("Cannot upload build", err)
 	}
 
-	log.Println("Successfully uploaded to", result.Location)
+	log.WithFields(log.Fields{
+		"location": result.Location,
+	}).Info("Successfully uploaded to")
 }

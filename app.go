@@ -19,9 +19,7 @@ func (app *App) configure() {
 }
 
 func (app *App) run() {
-	log.Info("Searching for build files in path:", app.path)
-
-	builds := NewReader(app.path).read(app.pattern)
+	builds := NewReader(app.path).read(app.pattern, app.include, app.exclude)
 	storage := S3Storage(app.region, app.bucket)
 
 	for _, build := range builds {
@@ -32,14 +30,19 @@ func (app *App) run() {
 }
 
 func (app *App) build(build BuildFile, storage Storage) {
-	log.Info("Found build file", build)
+	log.WithFields(log.Fields{
+		"file":      build.File,
+		"directory": build.Directory,
+		"name":      build.Name,
+		"priority":  build.Priority,
+	}).Info("Executing build")
 
 	hash, _ := Analyzer(build.Directory, build.Verify.Include, build.Verify.Exclude)
 
 	build.Hash = hash
 	build.Archive = "build/" + hash + ".tar.gz"
 
-	log.Info("Analyzing ends up with hash", hash)
+	log.WithField("hash", hash).Info("Analyzing ends up with hash")
 
 	if !app.force && storage.Has(build) {
 		if !app.skipDownload {

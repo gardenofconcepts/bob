@@ -1,36 +1,93 @@
 package main
 
 import (
-	"testing"
+	log "github.com/Sirupsen/logrus"
+	"math/rand"
 	"os"
+	"testing"
+	"time"
 )
 
 func TestArchive(t *testing.T) {
-	archive := "build/test.tar.gz"
-	sourceDirectory := "assets/src"
-	targetDirectory := "build"
-	checkExistingFile := "build/assets/src/test.js";
-	checkNonExistingFile := "build/assets/src/blub.gif";
+	log.SetLevel(log.DebugLevel)
+
+	workingDirectory := "build/" + randomString(10)
+	sourceDirectory := "assets"
+	targetDirectory := workingDirectory
+	archive := workingDirectory + "/test.tar.gz"
+	checkExistingFiles := []string{
+		targetDirectory + "/src/test.js",
+	}
+	checkNonExistingFiles := []string{
+		targetDirectory + "/src/blub.gif",
+	}
+	checkExistingLinks := []string{
+		targetDirectory + "/src/this_is_a_link.js",
+		targetDirectory + "/src/.bin/run",
+	}
+	checkExistingExecutables := []string{
+		targetDirectory + "/src/.bin/run",
+		targetDirectory + "/src/executables/run.sh",
+	}
+
 	include := []string{"**"}
-	exclude := []string{"**.gif"}
+	exclude := []string{"**/**.gif"}
 
-	err := NewArchive(archive).Compress(sourceDirectory, include, exclude)
-
-	if err != nil {
-		t.Error(err)
+	if err := os.Mkdir(workingDirectory, 0777); err != nil {
+		t.Error("Cannot create working dir:", err)
 	}
 
-	err = NewArchive(archive).Extract(targetDirectory)
-
-	if err != nil {
-		t.Error(err)
+	if err := NewArchive(archive).Compress(sourceDirectory, include, exclude); err != nil {
+		t.Error("Error while compressing data:", err)
 	}
 
-	if _, err := os.Stat(checkExistingFile); os.IsNotExist(err) {
-		t.Error("File not found: ", checkExistingFile)
+	if err := NewArchive(archive).Extract(targetDirectory); err != nil {
+		t.Error("Error while extracting data:", err)
 	}
 
-	if _, err := os.Stat(checkNonExistingFile); os.IsExist(err) {
-		t.Error("File found, but should not there: ", checkNonExistingFile)
+	for _, path := range checkExistingFiles {
+		if _, err := os.Stat(path); os.IsNotExist(err) {
+			t.Error("File not found, but should be there:", path)
+		}
 	}
+
+	for _, path := range checkNonExistingFiles {
+		if _, err := os.Stat(path); err == nil {
+			t.Error("File found, but should not there:", path)
+		}
+	}
+
+	for _, path := range checkExistingLinks {
+		info, err := os.Lstat(path)
+
+		if err != nil {
+			t.Error("Link not found, but should be there:", path)
+		}
+
+		if info.Mode()&os.ModeSymlink == 0 {
+			t.Error("File found, but should be a link:", path)
+		}
+	}
+
+	for _, path := range checkExistingExecutables {
+		info, err := os.Stat(path)
+
+		if err != nil || os.IsNotExist(err) {
+			t.Error("File not found, but should be there:", path)
+		} else if mode := info.Mode(); !info.IsDir() && mode&0111 == 0 {
+			t.Error("File found, but should be executable:", path)
+		}
+	}
+}
+
+func randomString(n int) string {
+	const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+	rand.Seed(time.Now().UTC().UnixNano())
+
+	b := make([]byte, n)
+	for i := range b {
+		b[i] = letterBytes[rand.Int63()%int64(len(letterBytes))]
+	}
+	return string(b)
 }
