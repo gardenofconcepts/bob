@@ -5,5 +5,8 @@
 * Validate 
 * Global config file (excludes, pattern)
 * Log level
+
+## Done
+
 * Cache folder instead of ./build
 * Local "storage" instead of S3

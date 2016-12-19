@@ -2,6 +2,7 @@ package main
 
 import (
 	log "github.com/Sirupsen/logrus"
+	"path"
 )
 
 func (app *App) configure() {
@@ -20,16 +21,22 @@ func (app *App) configure() {
 
 func (app *App) run() {
 	builds := NewReader(app.path).read(app.pattern, app.include, app.exclude)
-	storage := S3Storage(app.region, app.bucket)
+
+	storage := Storage()
+	storage.Register(StorageLocal(app.cache))
+
+	if app.storage == "s3" {
+		storage.Register(StorageS3(app.region, app.bucket))
+	}
 
 	for _, build := range builds {
-		app.build(build, *storage)
+		app.build(app.cache, build, *storage)
 	}
 
 	log.Info("Ready!")
 }
 
-func (app *App) build(build BuildFile, storage Storage) {
+func (app *App) build(cacheDir string, build BuildFile, storage StorageBag) {
 	log.WithFields(log.Fields{
 		"file":      build.File,
 		"directory": build.Directory,
@@ -41,7 +48,7 @@ func (app *App) build(build BuildFile, storage Storage) {
 		hash, _ := Analyzer(build.Directory, build.Verify.Include, build.Verify.Exclude)
 
 		build.Hash = hash
-		build.Archive = "build/" + hash + ".tar.gz"
+		build.Archive = path.Join(cacheDir, hash + ".tar.gz")
 
 		log.WithField("hash", hash).Info("Analyzing ends up with hash")
 

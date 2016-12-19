@@ -21,6 +21,8 @@ func main() {
 	region := flag.String("s3-region", "eu-central-1", "Specify S3 region")
 	bucket := flag.String("s3-bucket", "cmsbuild", "Specify S3 bucket name")
 	version := flag.Bool("version", false, "Show version")
+	cache := flag.String("cache", "build", "Directory for local (cache) files")
+	storage := flag.String("storage", "local", "Specify storage engine(s): local, s3")
 
 	flag.Parse()
 
@@ -36,6 +38,8 @@ func main() {
 		skipUpload:   *skipUpload,
 		region:       *region,
 		bucket:       *bucket,
+		cache:	      *cache,
+		storage:      *storage,
 	}
 
 	if *version {

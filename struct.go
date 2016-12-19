@@ -38,4 +38,6 @@ type App struct {
 	skipUpload   bool
 	region       string
 	bucket       string
+	storage      string
+	cache        string
 }

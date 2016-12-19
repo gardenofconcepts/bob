@@ -10,19 +10,21 @@ import (
 	"time"
 )
 
-type Storage struct {
+type StorageS3Backend struct {
+	StorageBackend
+
 	instance *session.Session
 	bucket   string
 }
 
-func S3Storage(region, bucket string) *Storage {
-	return &Storage{
+func StorageS3(region, bucket string) *StorageS3Backend {
+	return &StorageS3Backend{
 		instance: session.New(&aws.Config{Region: aws.String(region)}),
 		bucket:   bucket,
 	}
 }
 
-func (svc *Storage) Has(build BuildFile) bool {
+func (svc *StorageS3Backend) Has(build BuildFile) bool {
 	log.WithFields(log.Fields{
 		"bucket": svc.bucket,
 		"hash":   build.Hash,
@@ -51,7 +53,7 @@ func (svc *Storage) Has(build BuildFile) bool {
 	return true
 }
 
-func (svc *Storage) Get(build BuildFile) {
+func (svc *StorageS3Backend) Get(build BuildFile) {
 
 	file, err := os.Create(build.Archive)
 
@@ -78,7 +80,7 @@ func (svc *Storage) Get(build BuildFile) {
 	}).Info("Downloaded file")
 }
 
-func (svc *Storage) Put(build BuildFile) {
+func (svc *StorageS3Backend) Put(build BuildFile) {
 
 	log.WithFields(log.Fields{
 		"file": build.Archive,
