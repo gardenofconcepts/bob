@@ -1,18 +1,15 @@
 package main
 
 import (
-
-)
-import (
 	log "github.com/Sirupsen/logrus"
-	"path/filepath"
 	"os"
+	"path/filepath"
 )
 
 type StorageLocalBackend struct {
 	StorageBackend
 
-	path   string
+	path string
 }
 
 func StorageLocal(path string) *StorageLocalBackend {
@@ -29,7 +26,7 @@ func (svc *StorageLocalBackend) Has(build BuildFile) bool {
 	}).Debug("Check for local file")
 
 	if _, err := os.Stat(file); os.IsNotExist(err) {
-		return false;
+		return false
 	}
 
 	return true

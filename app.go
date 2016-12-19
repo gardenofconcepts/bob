@@ -48,7 +48,7 @@ func (app *App) build(cacheDir string, build BuildFile, storage StorageBag) {
 		hash, _ := Analyzer(build.Directory, build.Verify.Include, build.Verify.Exclude)
 
 		build.Hash = hash
-		build.Archive = path.Join(cacheDir, hash + ".tar.gz")
+		build.Archive = path.Join(cacheDir, hash+".tar.gz")
 
 		log.WithField("hash", hash).Info("Analyzing ends up with hash")
 

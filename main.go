@@ -38,7 +38,7 @@ func main() {
 		skipUpload:   *skipUpload,
 		region:       *region,
 		bucket:       *bucket,
-		cache:	      *cache,
+		cache:        *cache,
 		storage:      *storage,
 	}
 
