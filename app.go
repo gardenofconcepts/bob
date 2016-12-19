@@ -37,24 +37,30 @@ func (app *App) build(build BuildFile, storage Storage) {
 		"priority":  build.Priority,
 	}).Info("Executing build")
 
-	hash, _ := Analyzer(build.Directory, build.Verify.Include, build.Verify.Exclude)
+	if len(build.Verify.Include) > 0 {
+		hash, _ := Analyzer(build.Directory, build.Verify.Include, build.Verify.Exclude)
 
-	build.Hash = hash
-	build.Archive = "build/" + hash + ".tar.gz"
+		build.Hash = hash
+		build.Archive = "build/" + hash + ".tar.gz"
 
-	log.WithField("hash", hash).Info("Analyzing ends up with hash")
+		log.WithField("hash", hash).Info("Analyzing ends up with hash")
 
-	if !app.force && storage.Has(build) {
-		if !app.skipDownload {
-			storage.Get(build)
+		if !app.force && storage.Has(build) {
+			if !app.skipDownload {
+				storage.Get(build)
+			}
+			NewArchive(build.Archive).Extract(build.Directory)
+		} else {
+			Builder().Build(build.Directory, build.Build)
+			NewArchive(build.Archive).Compress(build.Directory, build.Package.Include, build.Package.Exclude)
+
+			if !app.skipUpload {
+				storage.Put(build)
+			}
 		}
-		NewArchive(build.Archive).Extract(build.Directory)
 	} else {
-		Builder().Build(build.Directory, build.Build)
-		NewArchive(build.Archive).Compress(build.Directory, build.Package.Include, build.Package.Exclude)
+		log.Info("No verification steps given, skip verification")
 
-		if !app.skipUpload {
-			storage.Put(build)
-		}
+		Builder().Build(build.Directory, build.Build)
 	}
 }
