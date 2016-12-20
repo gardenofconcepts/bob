@@ -1,5 +1,10 @@
 package main
 
+const CONFIG_FILE = "bob.yml"
+const CONFIG_PATTERN = "*.build.yml"
+const CONFIG_INCLUDE = "**"
+const CONFIG_EXCLUDE = ""
+
 type Build struct {
 	Command string `json:"command"`
 }
@@ -40,6 +45,10 @@ type App struct {
 	Include  []string `json:"include"`
 	Exclude  []string `json:"exclude"`
 	S3       S3Config `json:"s3"`
+}
+
+type AppDefaults struct {
+
 }
 
 type S3Config struct {

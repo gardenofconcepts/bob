@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"log"
 	"os"
 	"path/filepath"
@@ -18,67 +17,68 @@ func main() {
 		cli.StringFlag{
 			Name: "pattern, p",
 			Value: CONFIG_PATTERN,
-			Usage: "File pattern for build files",
+			Usage: "file pattern for build files",
 		},
 		cli.StringFlag{
-			Name: "include",
+			Name: "include, i",
 			Value: CONFIG_INCLUDE,
-			Usage: "Pattern for directory traversal",
+			Usage: "pattern for directory traversal",
 		},
 		cli.StringFlag{
-			Name: "exclude",
+			Name: "exclude, e",
 			Value: CONFIG_EXCLUDE,
-			Usage: "Excludes directories with this pattern (e.g. **/node_modules/**,.git)",
+			Usage: "excludes directories with this pattern (e.g. **/node_modules/**,.git)",
 		},
 		cli.BoolFlag{
 			Name: "debug",
-			Usage: "Enable debug mode (Log level: debug)",
+			Usage: "enable debug mode (Log level: debug)",
 		},
 		cli.BoolFlag{
 			Name: "verbose",
-			Usage: "Enable verbose mode (Log level: info)",
+			Usage: "enable verbose mode (Log level: info)",
 		},
 		cli.BoolFlag{
-			Name: "force",
-			Usage: "Rebuild data without checking remote",
+			Name: "force, f",
+			Usage: "rebuild data without checking remote",
 		},
 		cli.BoolFlag{
 			Name: "skip-download",
-			Usage: "Don't download builds",
+			Usage: "don't download builds",
 		},
 		cli.BoolFlag{
 			Name: "skip-upload",
-			Usage: "Don't upload builds",
+			Usage: "don't upload builds",
 		},
 		cli.StringFlag{
 			Name: "s3-region",
-			Usage: "Specify S3 region",
+			Usage: "specify S3 region",
 		},
 		cli.StringFlag{
 			Name: "s3-bucket",
-			Usage: "Specify S3 bucket name",
+			Usage: "specify S3 bucket name",
 		},
 		cli.StringFlag{
 			Name: "cache",
-			Usage: "Directory for local (cache) files",
+			Value: os.TempDir(),
+			Usage: "directory for local (cache) files",
 		},
 		cli.StringFlag{
 			Name: "storage",
 			Value: "local",
-			Usage: "Specify storage engine(s): local, s3",
+			Usage: "specify storage engine(s): local, s3",
 		},
 		cli.StringFlag{
 			Name: "config",
-			Usage: "Specify a configuration path",
+			Usage: "path to configuration file",
 		},
 	}
 	cliApp.Commands = []cli.Command{
 		{
 			Name:    "build",
-			Usage:   "add a task to the list",
+			Usage:   "find build files to start build process",
 			Action:  func(c *cli.Context) error {
 				app := App{
-					Path:         getPath(),
+					Path:         getPath(c),
 					Force:        c.GlobalBool("force"),
 					Config:       c.GlobalString("config"),
 					Include:      cleanList(strings.Split(c.GlobalString("include"), ",")),
@@ -96,8 +96,6 @@ func main() {
 					},
 				}
 
-				app.Path = getPath()
-
 				app.configure()
 				app.run()
 
@@ -108,11 +106,11 @@ func main() {
 	cliApp.Run(os.Args)
 }
 
-func getPath() string {
+func getPath(c *cli.Context) string {
 	path, _ := os.Getwd()
 
-	if len(flag.Args()) > 0 && len(flag.Arg(0)) > 0 {
-		path = flag.Arg(0)
+	if c.Args().Present() {
+		path = c.Args().First()
 	}
 
 	path, err := filepath.Abs(path)

@@ -40,21 +40,33 @@ func (config *App) Apply(app *App) error {
 		log.WithError(err).Fatal("Error while applying configuration")
 	}
 
-	if (config.Download) {
-		app.Download = true
+	if config.Download == false {
+		app.Download = false
 	}
 
-	if (config.Upload) {
-		app.Upload = true
+	if config.Upload == false {
+		app.Upload = false
 	}
 
-	if app.Include != []string{CONFIG_INCLUDE} {
+	if config.Verbose == true {
+		app.Verbose = true
+	}
+
+	if config.Debug == true {
+		app.Debug = true
+	}
+
+	if app.Pattern != CONFIG_PATTERN {
+		app.Pattern = config.Pattern
+	}
+
+	/*if app.Include != []string{CONFIG_INCLUDE} {
 		app.Include = config.Include
 	}
 
 	if app.Exclude != []string{CONFIG_EXCLUDE} {
 		app.Exclude = config.Exclude
-	}
+	}*/
 
 	fmt.Printf("Try to apply: %+v\n", app)
 

@@ -7,11 +7,6 @@ import (
 	"path"
 )
 
-const CONFIG_FILE = "bob.yml"
-const CONFIG_PATTERN = "*.build.yml"
-const CONFIG_INCLUDE = "**"
-const CONFIG_EXCLUDE = ""
-
 func (app *App) configure() {
 	app.configureLog()
 
