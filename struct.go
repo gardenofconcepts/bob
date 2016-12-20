@@ -1,17 +1,17 @@
 package main
 
 type Build struct {
-	Command string `json:"command"`
+	Command string `yaml:"command"`
 }
 
 type Verify struct {
-	Include []string `json:"include"`
-	Exclude []string `json:"exclude"`
+	Include []string `yaml:"include"`
+	Exclude []string `yaml:"exclude"`
 }
 
 type Package struct {
-	Include []string `json:"include"`
-	Exclude []string `json:"exclude"`
+	Include []string `yaml:"include"`
+	Exclude []string `yaml:"exclude"`
 }
 
 type BuildFile struct {
@@ -19,30 +19,34 @@ type BuildFile struct {
 	Directory string
 	Hash      string
 	Archive   string
-	Name      string  `json:"name"`
-	Priority  int     `json:"priority"`
-	Verify    Verify  `json:"verify"`
-	Package   Package `json:"package"`
-	Build     []Build `json:"build"`
+	Name      string  `yaml:"name"`
+	Priority  int     `yaml:"priority"`
+	Verify    Verify  `yaml:"verify"`
+	Package   Package `yaml:"package"`
+	Build     []Build `yaml:"build"`
 }
 
 type App struct {
-	Path     string
-	Config   string
-	Cache    string `json:"cache"`
-	Pattern  string `json:"pattern"`
-	Storage  string `json:"storage"`
-	Force    bool
-	Debug    bool     `json:"debug"`
-	Verbose  bool     `json:"verbose"`
-	Download bool     `json:"download"`
-	Upload   bool     `json:"upload"`
-	Include  []string `json:"include"`
-	Exclude  []string `json:"exclude"`
-	S3       S3Config `json:"s3"`
+	Path      string
+	Config    string
+	Cache     string `yaml:"cache"`
+	Pattern   string `yaml:"pattern"`
+	Storage   string `yaml:"storage"`
+	Force     bool
+	Debug     bool     `yaml:"debug"`
+	Verbose   bool     `yaml:"verbose"`
+	S3        S3Config `yaml:"s3"`
+	AppConfig `yaml:",inline"`
+}
+
+type AppConfig struct {
+	SkipDownload bool     `yaml:"skipDownload"`
+	SkipUpload   bool     `yaml:"skipUpload"`
+	Include      []string `yaml:"include"`
+	Exclude      []string `yaml:"exclude"`
 }
 
 type S3Config struct {
-	Bucket string `json:"bucket"`
-	Region string `json:"region"`
+	Bucket string `yaml:"bucket"`
+	Region string `yaml:"region"`
 }
