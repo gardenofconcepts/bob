@@ -1,5 +1,10 @@
 package main
 
+const CONFIG_FILE = "bob.yml"
+const CONFIG_PATTERN = "*.build.yml"
+const CONFIG_INCLUDE = "**"
+const CONFIG_EXCLUDE = ""
+
 type Build struct {
 	Command string `yaml:"command"`
 }
@@ -44,6 +49,10 @@ type AppConfig struct {
 	SkipUpload   bool     `yaml:"skipUpload"`
 	Include      []string `yaml:"include"`
 	Exclude      []string `yaml:"exclude"`
+}
+
+type AppDefaults struct {
+
 }
 
 type S3Config struct {
