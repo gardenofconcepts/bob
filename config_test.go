@@ -18,11 +18,11 @@ func TestConfig(t *testing.T) {
 		t.Errorf("Expect 'true', instead of %s", config.Verbose)
 	}
 
-	if config.Upload == true {
-		t.Errorf("Expect 'true', instead of %s", config.Upload)
+	if config.SkipUpload == true {
+		t.Errorf("Expect 'true', instead of %s", config.SkipUpload)
 	}
 
-	if config.Download == true {
-		t.Errorf("Expect 'true', instead of %s", config.Download)
+	if config.SkipDownload == true {
+		t.Errorf("Expect 'true', instead of %s", config.SkipDownload)
 	}
 }

@@ -34,25 +34,34 @@ type BuildFile struct {
 type App struct {
 	Path      string
 	Config    string
-	Cache     string `yaml:"cache"`
-	Pattern   string `yaml:"pattern"`
-	Storage   string `yaml:"storage"`
 	Force     bool
-	Debug     bool     `yaml:"debug"`
-	Verbose   bool     `yaml:"verbose"`
-	S3        S3Config `yaml:"s3"`
+	Defaults  AppConfigDefaults
 	AppConfig `yaml:",inline"`
 }
 
 type AppConfig struct {
+	Cache        string   `yaml:"cache"`
+	Pattern      string   `yaml:"pattern"`
+	Storage      string   `yaml:"storage"`
+	Debug        bool     `yaml:"debug"`
+	Verbose      bool     `yaml:"verbose"`
 	SkipDownload bool     `yaml:"skipDownload"`
 	SkipUpload   bool     `yaml:"skipUpload"`
 	Include      []string `yaml:"include"`
 	Exclude      []string `yaml:"exclude"`
+	S3           S3Config `yaml:"s3"`
 }
 
-type AppDefaults struct {
-
+type AppConfigDefaults struct {
+	Cache        bool
+	Pattern      bool
+	Storage      bool
+	Debug        bool
+	Verbose      bool
+	SkipDownload bool
+	SkipUpload   bool
+	Include      bool
+	Exclude      bool
 }
 
 type S3Config struct {

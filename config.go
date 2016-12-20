@@ -1,19 +1,17 @@
 package main
 
 import (
-	log "github.com/Sirupsen/logrus"
-	"github.com/imdario/mergo"
+		log "github.com/Sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
-	"fmt"
 )
 
-func ConfigReader() *App {
-	return &App{}
+func ConfigReader() *AppConfig {
+	return &AppConfig{}
 }
 
-func (config *App) Read(path string) {
+func (config *AppConfig) Read(path string) {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		log.WithField("file", path).Fatal("Configuratoin file not found")
 	}
@@ -28,47 +26,49 @@ func (config *App) Read(path string) {
 
 	err = yaml.Unmarshal(data, config)
 
-	fmt.Printf("Read configuration: %+v\n", config)
-
 	if err != nil {
 		log.WithError(err).Fatal("Error while parsing configuration file")
 	}
 }
 
-func (config *App) Apply(app *App) error {
-	if err := mergo.Map(app, config); err != nil {
-		log.WithError(err).Fatal("Error while applying configuration")
-	}
-
-	if config.Download == false {
-		app.Download = false
-	}
-
-	if config.Upload == false {
-		app.Upload = false
-	}
-
-	if config.Verbose == true {
-		app.Verbose = true
-	}
-
-	if config.Debug == true {
-		app.Debug = true
-	}
-
-	if app.Pattern != CONFIG_PATTERN {
+func (config *AppConfig) Apply(app *App) error {
+	if !app.Defaults.Pattern && len(config.Pattern) > 0 {
 		app.Pattern = config.Pattern
 	}
 
-	/*if app.Include != []string{CONFIG_INCLUDE} {
+	if !app.Defaults.Storage && len(config.Storage) > 0 {
+		app.Storage = config.Storage
+	}
+
+	if !app.Defaults.Cache && len(config.Cache) > 0 {
+		app.Cache = config.Cache
+	}
+
+	if !app.Defaults.Include && len(config.Include) > 0 {
 		app.Include = config.Include
 	}
 
-	if app.Exclude != []string{CONFIG_EXCLUDE} {
+	if !app.Defaults.Exclude && len(config.Exclude) > 0 {
 		app.Exclude = config.Exclude
-	}*/
+	}
 
-	fmt.Printf("Try to apply: %+v\n", app)
+	if !app.Defaults.SkipDownload {
+		app.SkipDownload = config.SkipDownload
+	}
+
+	if !app.Defaults.SkipUpload {
+		app.SkipUpload = config.SkipUpload
+	}
+
+	if !app.Defaults.Verbose && !app.Verbose {
+		app.Verbose = config.Verbose
+	}
+
+	if !app.Defaults.Debug && !app.Debug {
+		app.Debug = config.Debug
+	}
+
+	// s3
 
 	return nil
 }

@@ -7,8 +7,8 @@ s3:
   bucket: cmsbuildAAAAAAAAAAAAAAAAAAAAAAAAAAa
   region: eu-central-1
 cache: buildXX
-debug: true
-verbose: true
-download: false
-upload: true
+debug: false
+verbose: false
+skipDownload: false
+skipUpload: false
 storage: s3

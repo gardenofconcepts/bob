@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"os"
 	"path"
@@ -19,8 +18,6 @@ func (app *App) configure() {
 		config.Read(CONFIG_FILE)
 		config.Apply(app)
 	}
-
-	fmt.Printf("Apply configuration: %+v\n", app)
 
 	app.configureLog()
 }
@@ -73,7 +70,7 @@ func (app *App) build(cacheDir string, build BuildFile, storage StorageBag) {
 		log.WithField("hash", hash).Info("Analyzing ends up with hash")
 
 		if !app.Force && storage.Has(build) {
-			if !app.Download {
+			if !app.SkipDownload {
 				storage.Get(build)
 			}
 			NewArchive(build.Archive).Extract(build.Directory)
@@ -81,7 +78,7 @@ func (app *App) build(cacheDir string, build BuildFile, storage StorageBag) {
 			Builder().Build(build.Directory, build.Build)
 			NewArchive(build.Archive).Compress(build.Directory, build.Package.Include, build.Package.Exclude)
 
-			if !app.Upload {
+			if !app.SkipUpload {
 				storage.Put(build)
 			}
 		}
