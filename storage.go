@@ -2,6 +2,7 @@ package main
 
 import (
 	log "github.com/Sirupsen/logrus"
+	"reflect"
 )
 
 type StorageBackend interface {
@@ -23,7 +24,7 @@ func Storage() *StorageBag {
 func (svc *StorageBag) Register(backend StorageBackend) {
 	svc.backend = append(svc.backend, backend)
 
-	log.Debug("Register backend")
+	log.WithField("type", reflect.TypeOf(backend)).Debug("Register backend")
 }
 
 func (svc *StorageBag) Has(build BuildFile) bool {

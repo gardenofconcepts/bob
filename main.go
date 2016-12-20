@@ -2,55 +2,110 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
+	"gopkg.in/urfave/cli.v1"
 )
 
 func main() {
-	pattern := flag.String("pattern", "*.build.yml", "File pattern for build files")
-	include := flag.String("include", "**", "Pattern for directory traversal")
-	exclude := flag.String("exclude", "", "Excludes directories with this pattern (e.g. **/node_modules/**,.git)")
-	debug := flag.Bool("debug", false, "Enable debug mode (Log level: debug)")
-	verbose := flag.Bool("verbose", false, "Enable verbose mode (Log level: info)")
-	force := flag.Bool("force", false, "Rebuild data without checking remote")
-	skipDownload := flag.Bool("skip-download", false, "Don't download builds")
-	skipUpload := flag.Bool("skip-upload", false, "Don't upload builds")
-	region := flag.String("s3-region", "eu-central-1", "Specify S3 region")
-	bucket := flag.String("s3-bucket", "cmsbuild", "Specify S3 bucket name")
-	version := flag.Bool("version", false, "Show version")
-	cache := flag.String("cache", "build", "Directory for local (cache) files")
-	storage := flag.String("storage", "local", "Specify storage engine(s): local, s3")
-
-	flag.Parse()
-
-	app := App{
-		path:         getPath(),
-		pattern:      *pattern,
-		include:      strings.Split(*include, ","),
-		exclude:      strings.Split(*exclude, ","),
-		debug:        *debug,
-		verbose:      *verbose,
-		force:        *force,
-		skipDownload: *skipDownload,
-		skipUpload:   *skipUpload,
-		region:       *region,
-		bucket:       *bucket,
-		cache:        *cache,
-		storage:      *storage,
+	cliApp := cli.NewApp()
+	cliApp.Name = "bob"
+	cliApp.Usage = "Der Baumeister"
+	cliApp.Version = APP_VERSION
+	cliApp.Flags = []cli.Flag {
+		cli.StringFlag{
+			Name: "pattern, p",
+			Value: CONFIG_PATTERN,
+			Usage: "File pattern for build files",
+		},
+		cli.StringFlag{
+			Name: "include",
+			Value: CONFIG_INCLUDE,
+			Usage: "Pattern for directory traversal",
+		},
+		cli.StringFlag{
+			Name: "exclude",
+			Value: CONFIG_EXCLUDE,
+			Usage: "Excludes directories with this pattern (e.g. **/node_modules/**,.git)",
+		},
+		cli.BoolFlag{
+			Name: "debug",
+			Usage: "Enable debug mode (Log level: debug)",
+		},
+		cli.BoolFlag{
+			Name: "verbose",
+			Usage: "Enable verbose mode (Log level: info)",
+		},
+		cli.BoolFlag{
+			Name: "force",
+			Usage: "Rebuild data without checking remote",
+		},
+		cli.BoolFlag{
+			Name: "skip-download",
+			Usage: "Don't download builds",
+		},
+		cli.BoolFlag{
+			Name: "skip-upload",
+			Usage: "Don't upload builds",
+		},
+		cli.StringFlag{
+			Name: "s3-region",
+			Usage: "Specify S3 region",
+		},
+		cli.StringFlag{
+			Name: "s3-bucket",
+			Usage: "Specify S3 bucket name",
+		},
+		cli.StringFlag{
+			Name: "cache",
+			Usage: "Directory for local (cache) files",
+		},
+		cli.StringFlag{
+			Name: "storage",
+			Value: "local",
+			Usage: "Specify storage engine(s): local, s3",
+		},
+		cli.StringFlag{
+			Name: "config",
+			Usage: "Specify a configuration path",
+		},
 	}
+	cliApp.Commands = []cli.Command{
+		{
+			Name:    "build",
+			Usage:   "add a task to the list",
+			Action:  func(c *cli.Context) error {
+				app := App{
+					Path:         getPath(),
+					Force:        c.GlobalBool("force"),
+					Config:       c.GlobalString("config"),
+					Include:      cleanList(strings.Split(c.GlobalString("include"), ",")),
+					Exclude:      cleanList(strings.Split(c.GlobalString("exclude"), ",")),
+					Pattern:      c.GlobalString("pattern"),
+					Debug:        c.GlobalBool("debug"),
+					Verbose:      c.GlobalBool("verbose"),
+					Download:     c.GlobalBool("skip-download"),
+					Upload:       c.GlobalBool("skip-upload"),
+					Cache:        c.GlobalString("cache"),
+					Storage:      c.GlobalString("storage"),
+					S3: S3Config{
+						Region: c.GlobalString("region"),
+						Bucket: c.GlobalString("bucket"),
+					},
+				}
 
-	if *version {
-		fmt.Printf("Builder v%s (Build %s)\nCopyright (c) 2016 Garden of Concepts GmbH\n", APP_VERSION, APP_BUILD)
-		os.Exit(0)
+				app.Path = getPath()
+
+				app.configure()
+				app.run()
+
+				return nil
+			},
+		},
 	}
-
-	app.path = getPath()
-
-	app.configure()
-	app.run()
+	cliApp.Run(os.Args)
 }
 
 func getPath() string {

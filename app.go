@@ -1,18 +1,43 @@
 package main
 
 import (
+	"fmt"
 	log "github.com/Sirupsen/logrus"
+	"os"
 	"path"
 )
 
+const CONFIG_FILE = "bob.yml"
+const CONFIG_PATTERN = "*.build.yml"
+const CONFIG_INCLUDE = "**"
+const CONFIG_EXCLUDE = ""
+
 func (app *App) configure() {
+	app.configureLog()
+
+	if len(app.Config) > 0 {
+		config := ConfigReader()
+		config.Read(app.Config)
+		config.Apply(app)
+	} else if _, err := os.Stat(CONFIG_FILE); os.IsExist(err) {
+		config := ConfigReader()
+		config.Read(CONFIG_FILE)
+		config.Apply(app)
+	}
+
+	fmt.Printf("Apply configuration: %+v\n", app)
+
+	app.configureLog()
+}
+
+func (app *App) configureLog() {
 	level := log.WarnLevel
 
-	if app.verbose {
+	if app.Verbose {
 		level = log.InfoLevel
 	}
 
-	if app.debug {
+	if app.Debug {
 		level = log.DebugLevel
 	}
 
@@ -20,17 +45,17 @@ func (app *App) configure() {
 }
 
 func (app *App) run() {
-	builds := NewReader(app.path).read(app.pattern, app.include, app.exclude)
+	builds := NewReader(app.Path).read(app.Pattern, app.Include, app.Exclude)
 
 	storage := Storage()
-	storage.Register(StorageLocal(app.cache))
+	storage.Register(StorageLocal(app.Cache))
 
-	if app.storage == "s3" {
-		storage.Register(StorageS3(app.region, app.bucket))
+	if app.Storage == "s3" {
+		storage.Register(StorageS3(app.S3.Region, app.S3.Bucket))
 	}
 
 	for _, build := range builds {
-		app.build(app.cache, build, *storage)
+		app.build(app.Cache, build, *storage)
 	}
 
 	log.Info("Ready!")
@@ -52,8 +77,8 @@ func (app *App) build(cacheDir string, build BuildFile, storage StorageBag) {
 
 		log.WithField("hash", hash).Info("Analyzing ends up with hash")
 
-		if !app.force && storage.Has(build) {
-			if !app.skipDownload {
+		if !app.Force && storage.Has(build) {
+			if !app.Download {
 				storage.Get(build)
 			}
 			NewArchive(build.Archive).Extract(build.Directory)
@@ -61,7 +86,7 @@ func (app *App) build(cacheDir string, build BuildFile, storage StorageBag) {
 			Builder().Build(build.Directory, build.Build)
 			NewArchive(build.Archive).Compress(build.Directory, build.Package.Include, build.Package.Exclude)
 
-			if !app.skipUpload {
+			if !app.Upload {
 				storage.Put(build)
 			}
 		}

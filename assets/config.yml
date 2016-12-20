@@ -1,0 +1,14 @@
+pattern: "*.build.yml"
+exclude:
+  - "**/node_modules**"
+include:
+  - "**"
+s3:
+  bucket: cmsbuildAAAAAAAAAAAAAAAAAAAAAAAAAAa
+  region: eu-central-1
+cache: buildXX
+debug: true
+verbose: true
+download: false
+upload: true
+storage: s3
