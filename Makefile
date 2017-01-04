@@ -32,10 +32,12 @@ init:
 	cd "$(DIR)"
 	export GOPATH="$(DIR)"
 	go get gopkg.in/yaml.v2
+	go get gopkg.in/urfave/cli.v1
 	go get github.com/bradfitz/slice
 	go get github.com/bmatcuk/doublestar
 	go get github.com/aws/aws-sdk-go
 	go get github.com/Sirupsen/logrus
+	go get github.com/imdario/mergo
 
 cleancode:
 	cd "$(DIR)"

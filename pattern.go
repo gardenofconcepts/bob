@@ -7,7 +7,7 @@ import (
 )
 
 func matchList(patterns []string, path string, baseDir string) bool {
-	for _, pattern := range patterns {
+	for _, pattern := range cleanList(patterns) {
 		if match(pattern, path, baseDir) {
 			return true
 		}
@@ -27,4 +27,16 @@ func match(pattern string, path string, baseDir string) bool {
 	}).Debug("Matching file pattern")
 
 	return result
+}
+
+func cleanList(s []string) []string {
+	var r []string
+
+	for _, str := range s {
+		if str != "" {
+			r = append(r, str)
+		}
+	}
+
+	return r
 }

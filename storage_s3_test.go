@@ -2,6 +2,6 @@ package main
 
 import "testing"
 
-func TestStorage(t *testing.T) {
+func TestS3Storage(t *testing.T) {
 
 }

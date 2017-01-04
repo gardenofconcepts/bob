@@ -2,16 +2,34 @@ package main
 
 import (
 	log "github.com/Sirupsen/logrus"
+	"os"
+	"path"
 )
 
 func (app *App) configure() {
+	app.configureLog()
+
+	if len(app.Config) > 0 {
+		config := ConfigReader()
+		config.Read(app.Config)
+		config.Apply(app)
+	} else if _, err := os.Stat(CONFIG_FILE); os.IsExist(err) {
+		config := ConfigReader()
+		config.Read(CONFIG_FILE)
+		config.Apply(app)
+	}
+
+	app.configureLog()
+}
+
+func (app *App) configureLog() {
 	level := log.WarnLevel
 
-	if app.verbose {
+	if app.Verbose {
 		level = log.InfoLevel
 	}
 
-	if app.debug {
+	if app.Debug {
 		level = log.DebugLevel
 	}
 
@@ -19,17 +37,23 @@ func (app *App) configure() {
 }
 
 func (app *App) run() {
-	builds := NewReader(app.path).read(app.pattern, app.include, app.exclude)
-	storage := S3Storage(app.region, app.bucket)
+	builds := NewReader(app.Path).read(app.Pattern, app.Include, app.Exclude)
+
+	storage := Storage()
+	storage.Register(StorageLocal(app.Cache))
+
+	if app.Storage == "s3" {
+		storage.Register(StorageS3(app.S3.Region, app.S3.Bucket))
+	}
 
 	for _, build := range builds {
-		app.build(build, *storage)
+		app.build(app.Cache, build, *storage)
 	}
 
 	log.Info("Ready!")
 }
 
-func (app *App) build(build BuildFile, storage Storage) {
+func (app *App) build(cacheDir string, build BuildFile, storage StorageBag) {
 	log.WithFields(log.Fields{
 		"file":      build.File,
 		"directory": build.Directory,
@@ -37,24 +61,30 @@ func (app *App) build(build BuildFile, storage Storage) {
 		"priority":  build.Priority,
 	}).Info("Executing build")
 
-	hash, _ := Analyzer(build.Directory, build.Verify.Include, build.Verify.Exclude)
+	if len(build.Verify.Include) > 0 {
+		hash, _ := Analyzer(build.Directory, build.Verify.Include, build.Verify.Exclude)
 
-	build.Hash = hash
-	build.Archive = "build/" + hash + ".tar.gz"
+		build.Hash = hash
+		build.Archive = path.Join(cacheDir, hash+".tar.gz")
 
-	log.WithField("hash", hash).Info("Analyzing ends up with hash")
+		log.WithField("hash", hash).Info("Analyzing ends up with hash")
 
-	if !app.force && storage.Has(build) {
-		if !app.skipDownload {
-			storage.Get(build)
+		if !app.Force && storage.Has(build) {
+			if !app.SkipDownload {
+				storage.Get(build)
+			}
+			NewArchive(build.Archive).Extract(build.Directory)
+		} else {
+			Builder().Build(build.Directory, build.Build)
+			NewArchive(build.Archive).Compress(build.Directory, build.Package.Include, build.Package.Exclude)
+
+			if !app.SkipUpload {
+				storage.Put(build)
+			}
 		}
-		NewArchive(build.Archive).Extract(build.Directory)
 	} else {
-		Builder().Build(build.Directory, build.Build)
-		NewArchive(build.Archive).Compress(build.Directory, build.Package.Include, build.Package.Exclude)
+		log.Info("No verification steps given, skip verification")
 
-		if !app.skipUpload {
-			storage.Put(build)
-		}
+		Builder().Build(build.Directory, build.Build)
 	}
 }

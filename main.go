@@ -1,8 +1,7 @@
 package main
 
 import (
-	"flag"
-	"fmt"
+	"gopkg.in/urfave/cli.v1"
 	"log"
 	"os"
 	"path/filepath"
@@ -10,50 +9,121 @@ import (
 )
 
 func main() {
-	pattern := flag.String("pattern", "*.build.yml", "File pattern for build files")
-	include := flag.String("include", "**", "Pattern for directory traversal")
-	exclude := flag.String("exclude", "", "Excludes directories with this pattern (e.g. **/node_modules/**,.git)")
-	debug := flag.Bool("debug", false, "Enable debug mode (Log level: debug)")
-	verbose := flag.Bool("verbose", false, "Enable verbose mode (Log level: info)")
-	force := flag.Bool("force", false, "Rebuild data without checking remote")
-	skipDownload := flag.Bool("skip-download", false, "Don't download builds")
-	skipUpload := flag.Bool("skip-upload", false, "Don't upload builds")
-	region := flag.String("s3-region", "eu-central-1", "Specify S3 region")
-	bucket := flag.String("s3-bucket", "cmsbuild", "Specify S3 bucket name")
-	version := flag.Bool("version", false, "Show version")
-
-	flag.Parse()
-
-	app := App{
-		path:         getPath(),
-		pattern:      *pattern,
-		include:      strings.Split(*include, ","),
-		exclude:      strings.Split(*exclude, ","),
-		debug:        *debug,
-		verbose:      *verbose,
-		force:        *force,
-		skipDownload: *skipDownload,
-		skipUpload:   *skipUpload,
-		region:       *region,
-		bucket:       *bucket,
+	cliApp := cli.NewApp()
+	cliApp.Name = "bob"
+	cliApp.Usage = "Der Baumeister"
+	cliApp.Version = APP_VERSION
+	cliApp.Flags = []cli.Flag{
+		cli.StringFlag{
+			Name:  "pattern, p",
+			Value: CONFIG_PATTERN,
+			Usage: "file pattern for build files",
+		},
+		cli.StringFlag{
+			Name:  "include, i",
+			Value: CONFIG_INCLUDE,
+			Usage: "pattern for directory traversal",
+		},
+		cli.StringFlag{
+			Name:  "exclude, e",
+			Value: CONFIG_EXCLUDE,
+			Usage: "excludes directories with this pattern (e.g. **/node_modules/**,.git)",
+		},
+		cli.BoolFlag{
+			Name:  "debug",
+			Usage: "enable debug mode (Log level: debug)",
+		},
+		cli.BoolFlag{
+			Name:  "verbose",
+			Usage: "enable verbose mode (Log level: info)",
+		},
+		cli.BoolFlag{
+			Name:  "force, f",
+			Usage: "rebuild data without checking remote",
+		},
+		cli.BoolFlag{
+			Name:  "skip-download",
+			Usage: "don't download builds",
+		},
+		cli.BoolFlag{
+			Name:  "skip-upload",
+			Usage: "don't upload builds",
+		},
+		cli.StringFlag{
+			Name:  "s3-region",
+			Usage: "specify S3 region",
+		},
+		cli.StringFlag{
+			Name:  "s3-bucket",
+			Usage: "specify S3 bucket name",
+		},
+		cli.StringFlag{
+			Name:  "cache",
+			Value: os.TempDir(),
+			Usage: "directory for local (cache) files",
+		},
+		cli.StringFlag{
+			Name:  "storage",
+			Value: "local",
+			Usage: "specify storage engine(s): local, s3",
+		},
+		cli.StringFlag{
+			Name:  "config",
+			Usage: "path to configuration file",
+		},
 	}
+	cliApp.Commands = []cli.Command{
+		{
+			Name:  "build",
+			Usage: "find build files to start build process",
+			Action: func(c *cli.Context) error {
+				app := App{
+					Path:   getPath(c),
+					Force:  c.GlobalBool("force"),
+					Config: c.GlobalString("config"),
+					Defaults: AppConfigDefaults{
+						Pattern:      c.GlobalIsSet("pattern"),
+						Cache:        c.GlobalIsSet("cache"),
+						Storage:      c.GlobalIsSet("storage"),
+						Debug:        c.GlobalIsSet("debug"),
+						Verbose:      c.GlobalIsSet("verbose"),
+						SkipDownload: c.GlobalIsSet("skip-download"),
+						SkipUpload:   c.GlobalIsSet("skip-upload"),
+						Include:      c.GlobalIsSet("include"),
+						Exclude:      c.GlobalIsSet("exclude"),
+					},
+					AppConfig: AppConfig{
+						Include:      cleanList(strings.Split(c.GlobalString("include"), ",")),
+						Exclude:      cleanList(strings.Split(c.GlobalString("exclude"), ",")),
+						SkipDownload: c.GlobalBool("skip-download"),
+						SkipUpload:   c.GlobalBool("skip-upload"),
+						Pattern:      c.GlobalString("pattern"),
+						Debug:        c.GlobalBool("debug"),
+						Verbose:      c.GlobalBool("verbose"),
+						Cache:        c.GlobalString("cache"),
+						Storage:      c.GlobalString("storage"),
+						S3: S3Config{
+							Region: c.GlobalString("region"),
+							Bucket: c.GlobalString("bucket"),
+						},
+					},
+				}
 
-	if *version {
-		fmt.Printf("Builder v%s (Build %s)\nCopyright (c) 2016 Garden of Concepts GmbH\n", APP_VERSION, APP_BUILD)
-		os.Exit(0)
+				app.configure()
+				app.run()
+
+				return nil
+			},
+		},
 	}
-
-	app.path = getPath()
-
-	app.configure()
-	app.run()
+	cliApp.Run(os.Args)
 }
 
-func getPath() string {
+func getPath(c *cli.Context) string {
 	path, _ := os.Getwd()
 
-	if len(flag.Args()) > 0 && len(flag.Arg(0)) > 0 {
-		path = flag.Arg(0)
+	if c.Args().Present() {
+		path = c.Args().First()
 	}
 
 	path, err := filepath.Abs(path)
