@@ -12,6 +12,7 @@ func Builder() *BuildJob {
 	return &BuildJob{}
 }
 
+// TODO: error handling
 func (e *BuildJob) Build(directory string, builds []Build) {
 	for _, build := range builds {
 		e.Run(directory, build)

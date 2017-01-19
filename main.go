@@ -1,18 +1,20 @@
 package main
 
 import (
+	"fmt"
 	"gopkg.in/urfave/cli.v1"
-	"log"
 	"os"
-	"path/filepath"
-	"strings"
 )
 
 func main() {
+	path, _ := os.Getwd()
+
 	cliApp := cli.NewApp()
 	cliApp.Name = "bob"
 	cliApp.Usage = "Der Baumeister"
+	cliApp.ArgsUsage = fmt.Sprintf("Path to directory where build declaration files are located OR specify a list of build declaration files (Default: %s)", path)
 	cliApp.Version = APP_VERSION
+	cliApp.Action = ActionBuild.Action
 	cliApp.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "pattern, p",
@@ -73,65 +75,9 @@ func main() {
 		},
 	}
 	cliApp.Commands = []cli.Command{
-		{
-			Name:  "build",
-			Usage: "find build files to start build process",
-			Action: func(c *cli.Context) error {
-				app := App{
-					Path:   getPath(c),
-					Force:  c.GlobalBool("force"),
-					Config: c.GlobalString("config"),
-					Defaults: AppConfigDefaults{
-						Pattern:      c.GlobalIsSet("pattern"),
-						Cache:        c.GlobalIsSet("cache"),
-						Storage:      c.GlobalIsSet("storage"),
-						Debug:        c.GlobalIsSet("debug"),
-						Verbose:      c.GlobalIsSet("verbose"),
-						SkipDownload: c.GlobalIsSet("skip-download"),
-						SkipUpload:   c.GlobalIsSet("skip-upload"),
-						Include:      c.GlobalIsSet("include"),
-						Exclude:      c.GlobalIsSet("exclude"),
-					},
-					AppConfig: AppConfig{
-						Include:      cleanList(strings.Split(c.GlobalString("include"), ",")),
-						Exclude:      cleanList(strings.Split(c.GlobalString("exclude"), ",")),
-						SkipDownload: c.GlobalBool("skip-download"),
-						SkipUpload:   c.GlobalBool("skip-upload"),
-						Pattern:      c.GlobalString("pattern"),
-						Debug:        c.GlobalBool("debug"),
-						Verbose:      c.GlobalBool("verbose"),
-						Cache:        c.GlobalString("cache"),
-						Storage:      c.GlobalString("storage"),
-						S3: S3Config{
-							Region: c.GlobalString("region"),
-							Bucket: c.GlobalString("bucket"),
-						},
-					},
-				}
-
-				app.configure()
-				app.run()
-
-				return nil
-			},
-		},
+		ActionBuild,
+		ActionFind,
+		ActionVerify,
 	}
 	cliApp.Run(os.Args)
-}
-
-func getPath(c *cli.Context) string {
-	path, _ := os.Getwd()
-
-	if c.Args().Present() {
-		path = c.Args().First()
-	}
-
-	path, err := filepath.Abs(path)
-
-	if err != nil {
-		log.Fatal("Invalid directory", err)
-		os.Exit(-1)
-	}
-
-	return path
 }

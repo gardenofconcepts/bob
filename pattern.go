@@ -40,3 +40,20 @@ func cleanList(s []string) []string {
 
 	return r
 }
+
+func buildPaths(rootDir string, baseDir string, paths []string) []string {
+	result := []string{}
+
+	for _, path := range paths {
+		path = filepath.Join(baseDir, path)
+		path, err := filepath.Rel(rootDir, path)
+
+		if err != nil {
+			panic(err)
+		}
+
+		result = append(result, path)
+	}
+
+	return result
+}

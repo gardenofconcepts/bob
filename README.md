@@ -40,6 +40,13 @@ Linux, OS X, or Unix, or at `C:\Users\USERNAME\.aws\credentials` on Windows.
       -version
             Show version
 
+## Configuration
+
+| Name   | Default | Description
+| ---    | ---     | ---        
+| `cwd`  | `.`     | Current working directory to resolve relative paths (`include`, `exclude`, `command`)
+| `root` | `.`     | Top level directory to verify / package files
+
 ## Build
 
 Run ``make`` to build binaries:

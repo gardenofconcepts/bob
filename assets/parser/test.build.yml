@@ -1,5 +1,7 @@
-name: blubpuuups
-priority: 1
+name: test file
+priority: 10
+root: this_is_my_root
+cwd: change_working_directory
 verify:
   include:
     - "**/*.js"

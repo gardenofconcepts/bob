@@ -6,23 +6,23 @@ import (
 	"path/filepath"
 )
 
-func Analyzer(directory string, include []string, exclude []string) (string, error) {
-	log.WithFields(log.Fields{
-		"cwd":     directory,
-		"include": include,
-		"exclude": exclude,
-	}).Info("Analyzing directory")
-
-	hashes := read(directory, include, exclude)
+func Analyzer(rootDir string, include []string, exclude []string) (string, error) {
+	hashes := read(rootDir, include, exclude)
 	hash, err := hashList(hashes)
 
 	return hash, err
 }
 
-func read(baseDir string, includes []string, excludes []string) []string {
+func read(rootDir string, includes []string, excludes []string) []string {
 	hashes := []string{}
 
-	filepath.Walk(baseDir, func(filePath string, file os.FileInfo, err error) error {
+	log.WithFields(log.Fields{
+		"cwd":     rootDir,
+		"include": includes,
+		"exclude": excludes,
+	}).Info("Analyzing directory")
+
+	filepath.Walk(rootDir, func(filePath string, file os.FileInfo, err error) error {
 		if err != nil {
 			log.Warning(err)
 			return nil
@@ -32,7 +32,7 @@ func read(baseDir string, includes []string, excludes []string) []string {
 			return nil
 		}
 
-		if matchList(includes, filePath, baseDir) && !matchList(excludes, filePath, baseDir) {
+		if matchList(includes, filePath, rootDir) && !matchList(excludes, filePath, rootDir) {
 			hash, _ := hashFile(filePath)
 			hashes = append(hashes, hash)
 

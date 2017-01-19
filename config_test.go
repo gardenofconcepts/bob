@@ -4,7 +4,7 @@ import "testing"
 
 func TestConfig(t *testing.T) {
 	config := ConfigReader()
-	config.Read("assets/config.yml")
+	config.Read("assets/config/test.yml")
 
 	if config.Pattern != "*.build.yml" {
 		t.Errorf("Expect '*.build.yml', instead of %s", config.Pattern)
