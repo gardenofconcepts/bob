@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"sort"
 )
 
 func hashFile(filePath string) (string, error) {
@@ -28,11 +29,20 @@ func hashFile(filePath string) (string, error) {
 	return hex.EncodeToString(hash.Sum(result)), nil
 }
 
-func hashList(hashes []string) (string, error) {
-	joinedString := strings.Join(hashes, ",")
+func hashList(hashes map[string]string) string {
+	list := make([]string, 0, len(hashes))
+
+	for _, value := range hashes {
+		if len(value) > 0 {
+			list = append(list, value)
+		}
+	}
+
+	sort.Strings(list)
+	joinedString := strings.Join(list, ",")
 	hash := md5.New()
 
 	io.WriteString(hash, joinedString)
 
-	return hex.EncodeToString(hash.Sum(nil)), nil
+	return hex.EncodeToString(hash.Sum(nil))
 }

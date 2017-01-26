@@ -8,13 +8,13 @@ import (
 
 func Analyzer(rootDir string, include []string, exclude []string) (string, error) {
 	hashes := read(rootDir, include, exclude)
-	hash, err := hashList(hashes)
+	hash := hashList(hashes)
 
-	return hash, err
+	return hash, nil
 }
 
-func read(rootDir string, includes []string, excludes []string) []string {
-	hashes := []string{}
+func read(rootDir string, includes []string, excludes []string) map[string]string {
+	hashList := make(map[string]string)
 
 	log.WithFields(log.Fields{
 		"cwd":     rootDir,
@@ -34,12 +34,12 @@ func read(rootDir string, includes []string, excludes []string) []string {
 
 		if matchList(includes, filePath, rootDir) && !matchList(excludes, filePath, rootDir) {
 			hash, _ := hashFile(filePath)
-			hashes = append(hashes, hash)
+			hashList[filePath] = hash
 
 			log.WithFields(log.Fields{
 				"file": filePath,
 				"hash": hash,
-			}).Debug("Include file with hash")
+			}).Debug("Append file")
 		} else {
 			log.WithField("file", filePath).Debug("Skip file")
 		}
@@ -47,5 +47,5 @@ func read(rootDir string, includes []string, excludes []string) []string {
 		return nil
 	})
 
-	return hashes
+	return hashList
 }

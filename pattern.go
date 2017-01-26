@@ -6,9 +6,13 @@ import (
 	"path/filepath"
 )
 
+func match(includes []string, excludes []string, filePath string, baseDir string) bool {
+	return matchList(includes, filePath, baseDir) && !matchList(excludes, filePath, baseDir)
+}
+
 func matchList(patterns []string, path string, baseDir string) bool {
 	for _, pattern := range cleanList(patterns) {
-		if match(pattern, path, baseDir) {
+		if matchPattern(pattern, path, baseDir) {
 			return true
 		}
 	}
@@ -16,7 +20,7 @@ func matchList(patterns []string, path string, baseDir string) bool {
 	return false
 }
 
-func match(pattern string, path string, baseDir string) bool {
+func matchPattern(pattern string, path string, baseDir string) bool {
 	path, _ = filepath.Rel(baseDir, path)
 	result, _ := doublestar.Match(pattern, path)
 

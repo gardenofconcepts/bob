@@ -21,8 +21,18 @@ func (app App) verify() {
 	builds := NewReader(app.Path).read(app.Pattern, app.Include, app.Exclude)
 
 	for _, build := range builds {
-		hash, _ := Analyzer(build.Root, build.Verify.Include, build.Verify.Exclude)
+		app.printInfo(build)
 
-		fmt.Printf("%s %s\n", hash, build.File)
+		hashes := read(build.Root, build.Verify.Include, build.Verify.Exclude)
+
+		fmt.Printf("Hash     : %s\n", hashList(hashes))
+		fmt.Printf("Status   : %s\n", "n/a")
+		fmt.Print("Verified :\n")
+
+		for path, hash := range hashes {
+			fmt.Printf("           %s\t%s\n", hash, path)
+		}
+
+		fmt.Print("\n-----------------------------------------\n\n")
 	}
 }

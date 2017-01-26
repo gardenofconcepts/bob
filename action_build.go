@@ -25,7 +25,7 @@ func (app *App) build() {
 	storage.Register(StorageLocal(app.Cache))
 
 	if app.Storage == "s3" {
-		storage.Register(StorageS3(app.S3.Region, app.S3.Bucket))
+		//storage.Register(StorageS3(app.S3.Region, app.S3.Bucket))
 	}
 
 	for _, build := range builds {
