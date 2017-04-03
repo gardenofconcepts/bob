@@ -1,7 +1,7 @@
 package main
 
 import (
-		log "github.com/Sirupsen/logrus"
+	log "github.com/Sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
@@ -58,6 +58,10 @@ func (config *AppConfig) Apply(app *App) error {
 
 	if !app.Defaults.SkipUpload {
 		app.SkipUpload = config.SkipUpload
+	}
+
+	if !app.Defaults.SkipBuild {
+		app.SkipBuild = config.SkipBuild
 	}
 
 	if !app.Defaults.Verbose && !app.Verbose {

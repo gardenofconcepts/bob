@@ -15,8 +15,8 @@ type StorageBag struct {
 	backend []StorageBackend
 }
 
-func Storage() *StorageBag {
-	return &StorageBag{
+func Storage() StorageBag {
+	return StorageBag{
 		backend: []StorageBackend{},
 	}
 }

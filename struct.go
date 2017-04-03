@@ -9,6 +9,11 @@ type Build struct {
 	Command string `yaml:"command"`
 }
 
+type Constraint struct {
+	Command  string `yaml:"command"`
+	Constant string `yaml:"constant"` // CONSTANT_OS, CONSTANT_VERSION (bob version)
+}
+
 type Verify struct {
 	Include []string `yaml:"include"`
 	Exclude []string `yaml:"exclude"`
@@ -20,23 +25,27 @@ type Package struct {
 }
 
 type BuildFile struct {
-	File      string
-	Directory string
-	Hash      string
-	Archive   string
-	Name      string  `yaml:"name"`
-	Priority  int     `yaml:"priority"`
-	Verify    Verify  `yaml:"verify"`
-	Package   Package `yaml:"package"`
-	Build     []Build `yaml:"build"`
+	File       string
+	Directory  string
+	Hash       string
+	Archive    string
+	Name       string       `yaml:"name"`
+	Cwd        string       `yaml:"cwd"`  // change working directory
+	Root       string       `yaml:"root"` // lowest level for finding / verification
+	Priority   int          `yaml:"priority"`
+	Verify     Verify       `yaml:"verify"`
+	Package    Package      `yaml:"package"`
+	Build      []Build      `yaml:"build"`
+	Constraint []Constraint `yaml:"constraint"` // node/npm version, OS identifier // https://github.com/Knetic/govaluate
 }
 
 type App struct {
-	Path      string
-	Config    string
-	Force     bool
-	Defaults  AppConfigDefaults
-	AppConfig `yaml:",inline"`
+	Path       string
+	Config     string
+	Force      bool
+	Defaults   AppConfigDefaults
+	StorageBag StorageBag
+	AppConfig  `yaml:",inline"`
 }
 
 type AppConfig struct {
@@ -47,6 +56,7 @@ type AppConfig struct {
 	Verbose      bool     `yaml:"verbose"`
 	SkipDownload bool     `yaml:"skipDownload"`
 	SkipUpload   bool     `yaml:"skipUpload"`
+	SkipBuild    bool     `yaml:"skipBuild"`
 	Include      []string `yaml:"include"`
 	Exclude      []string `yaml:"exclude"`
 	S3           S3Config `yaml:"s3"`
@@ -60,6 +70,7 @@ type AppConfigDefaults struct {
 	Verbose      bool
 	SkipDownload bool
 	SkipUpload   bool
+	SkipBuild    bool
 	Include      bool
 	Exclude      bool
 }

@@ -57,7 +57,7 @@ func (reader *Result) read(glob string, includes []string, excludes []string) []
 		}
 
 		if matched {
-			build := Parser(path).parse()
+			build := Parser().load(path)
 			matches = append(matches, *build)
 
 			log.WithFields(log.Fields{
@@ -70,6 +70,8 @@ func (reader *Result) read(glob string, includes []string, excludes []string) []
 
 		return nil
 	})
+
+	log.Debug("Sorting build files...")
 
 	slice.Sort(matches[:], func(i, j int) bool {
 		return matches[i].Priority < matches[j].Priority

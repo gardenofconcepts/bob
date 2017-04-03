@@ -2,17 +2,15 @@ package main
 
 import (
 	log "github.com/Sirupsen/logrus"
-	"math/rand"
 	"os"
 	"testing"
-	"time"
 )
 
 func TestArchive(t *testing.T) {
-	log.SetLevel(log.DebugLevel)
+	log.SetLevel(log.ErrorLevel)
 
 	workingDirectory := "build/" + randomString(10)
-	sourceDirectory := "assets"
+	sourceDirectory := "assets/archive"
 	targetDirectory := workingDirectory
 	archive := workingDirectory + "/test.tar.gz"
 	checkExistingFiles := []string{
@@ -37,7 +35,7 @@ func TestArchive(t *testing.T) {
 		t.Error("Cannot create working dir:", err)
 	}
 
-	if err := NewArchive(archive).Compress(sourceDirectory, include, exclude); err != nil {
+	if _, err := NewArchive(archive).Compress(sourceDirectory, include, exclude); err != nil {
 		t.Error("Error while compressing data:", err)
 	}
 
@@ -78,16 +76,8 @@ func TestArchive(t *testing.T) {
 			t.Error("File found, but should be executable:", path)
 		}
 	}
-}
 
-func randomString(n int) string {
-	const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	t.Run("Extracting archive and overwrite existing files", func(t *testing.T) {
 
-	rand.Seed(time.Now().UTC().UnixNano())
-
-	b := make([]byte, n)
-	for i := range b {
-		b[i] = letterBytes[rand.Int63()%int64(len(letterBytes))]
-	}
-	return string(b)
+	})
 }
