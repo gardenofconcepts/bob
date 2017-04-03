@@ -40,11 +40,12 @@ type BuildFile struct {
 }
 
 type App struct {
-	Path      string
-	Config    string
-	Force     bool
-	Defaults  AppConfigDefaults
-	AppConfig `yaml:",inline"`
+	Path       string
+	Config     string
+	Force      bool
+	Defaults   AppConfigDefaults
+	StorageBag StorageBag
+	AppConfig  `yaml:",inline"`
 }
 
 type AppConfig struct {
@@ -55,6 +56,7 @@ type AppConfig struct {
 	Verbose      bool     `yaml:"verbose"`
 	SkipDownload bool     `yaml:"skipDownload"`
 	SkipUpload   bool     `yaml:"skipUpload"`
+	SkipBuild    bool     `yaml:"skipBuild"`
 	Include      []string `yaml:"include"`
 	Exclude      []string `yaml:"exclude"`
 	S3           S3Config `yaml:"s3"`
@@ -68,6 +70,7 @@ type AppConfigDefaults struct {
 	Verbose      bool
 	SkipDownload bool
 	SkipUpload   bool
+	SkipBuild    bool
 	Include      bool
 	Exclude      bool
 }

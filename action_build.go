@@ -21,15 +21,8 @@ var ActionBuild = cli.Command{
 func (app *App) build() {
 	builds := NewReader(app.Path).read(app.Pattern, app.Include, app.Exclude)
 
-	storage := Storage()
-	storage.Register(StorageLocal(app.Cache))
-
-	if app.Storage == "s3" {
-		//storage.Register(StorageS3(app.S3.Region, app.S3.Bucket))
-	}
-
 	for _, build := range builds {
-		app.processVerification(app.Cache, build, *storage)
+		app.processVerification(app.Cache, build, app.StorageBag)
 	}
 
 	log.Info("Ready!")
@@ -43,6 +36,8 @@ func (app *App) processVerification(cacheDir string, build BuildFile, storage St
 		"priority":  build.Priority,
 	}).Info("Executing build")
 
+	// If there are no verification pattern defined skip the whole process
+	// and execute the commands directly
 	if len(build.Verify.Include) > 0 {
 		hash, _ := Analyzer(build.Root, build.Verify.Include, build.Verify.Exclude)
 
@@ -57,12 +52,24 @@ func (app *App) processVerification(cacheDir string, build BuildFile, storage St
 			}
 			NewArchive(build.Archive).Extract(build.Directory)
 		} else {
-			app.processBuild(build, storage)
+			if app.SkipBuild {
+				log.WithFields(log.Fields{
+					"file": build.File,
+				}).Warning("Skip build process")
+			} else {
+				app.processBuild(build, storage)
+			}
 		}
 	} else {
 		log.Info("No verification steps given, skip verification")
 
-		app.processBuild(build, storage)
+		if app.SkipBuild {
+			log.WithFields(log.Fields{
+				"file": build.File,
+			}).Warning("Skip build process")
+		} else {
+			app.processBuild(build, storage)
+		}
 	}
 }
 
@@ -70,7 +77,7 @@ func (app *App) processBuild(build BuildFile, storage StorageBag) {
 	// TODO: if anything goes wrong, there should be some error handling
 	Builder().Build(build.Directory, build.Build)
 
-	NewArchive(build.Archive).Compress(build.Directory, build.Package.Include, build.Package.Exclude)
+	NewArchive(build.Archive).Compress(build.Root, build.Package.Include, build.Package.Exclude)
 
 	if !app.SkipUpload {
 		storage.Put(build)

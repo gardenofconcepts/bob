@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"gopkg.in/urfave/cli.v1"
+	"path/filepath"
 )
 
 var ActionVerify = cli.Command{
@@ -24,12 +25,20 @@ func (app App) verify() {
 		app.printInfo(build)
 
 		hashes := read(build.Root, build.Verify.Include, build.Verify.Exclude)
+		status := "not found"
+
+		if app.StorageBag.Has(BuildFile{
+			Hash: hashList(hashes),
+		}) {
+			status = "found"
+		}
 
 		fmt.Printf("Hash     : %s\n", hashList(hashes))
-		fmt.Printf("Status   : %s\n", "n/a")
+		fmt.Printf("Status   : %s\n", status)
 		fmt.Print("Verified :\n")
 
 		for path, hash := range hashes {
+			path, _ = filepath.Rel(build.Root, path)
 			fmt.Printf("           %s\t%s\n", hash, path)
 		}
 

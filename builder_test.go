@@ -1,11 +1,11 @@
 package main
 
 import (
+	"bytes"
+	"io"
+	"os"
 	"path/filepath"
 	"testing"
-	"io"
-	"bytes"
-	"os"
 )
 
 func TestBuilder(t *testing.T) {

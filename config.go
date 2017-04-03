@@ -60,6 +60,10 @@ func (config *AppConfig) Apply(app *App) error {
 		app.SkipUpload = config.SkipUpload
 	}
 
+	if !app.Defaults.SkipBuild {
+		app.SkipBuild = config.SkipBuild
+	}
+
 	if !app.Defaults.Verbose && !app.Verbose {
 		app.Verbose = config.Verbose
 	}

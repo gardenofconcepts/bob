@@ -36,27 +36,28 @@ func (app App) printInfo(build BuildFile) {
 	fmt.Printf("Cwd      : %s\n", build.Cwd)
 	fmt.Print("Verify   :\n")
 
-	for _, path := range buildPaths(app.Path, build.Directory, build.Verify.Include) {
+	for _, path := range build.Verify.Include {
 		fmt.Printf("           (+) %s\n", path)
 	}
 
-	for _, path := range buildPaths(app.Path, build.Directory, build.Verify.Exclude) {
+	for _, path := range build.Verify.Exclude {
 		fmt.Printf("           (-) %s\n", path)
 	}
 
 	fmt.Print("Package  :\n")
 
-	for _, path := range buildPaths(app.Path, build.Directory, build.Package.Include) {
+	for _, path := range build.Package.Include {
 		fmt.Printf("           (+) %s\n", path)
 	}
 
-	for _, path := range buildPaths(app.Path, build.Directory, build.Package.Exclude) {
+	for _, path := range build.Package.Exclude {
 		fmt.Printf("           (-) %s\n", path)
 	}
 
 	fmt.Print("Command  :\n")
 
 	for _, cmd := range build.Build {
-		fmt.Printf("           (o) %s\n", cmd.Command)
+		command := buildPath(build.Root, build.Directory, cmd.Command)
+		fmt.Printf("           (o) %s\n", command)
 	}
 }

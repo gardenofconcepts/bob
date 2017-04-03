@@ -25,6 +25,16 @@ run:
 test:
 	go test -v *.go
 
+test-coverage:
+	go test -coverprofile=coverage.out
+
+	cat coverage.out | cut -c30-
+
+	sed -i "s/_\/home\/dennis\/htdocs\/builder/./" coverage.out
+	go tool cover -func=coverage.out
+	go tool cover -html=coverage.out
+	rm -rf coverage.out
+
 clean:
 	rm -rf "$(DIR)/bin/*" ; \
 	rm -rf "$(DIR)/build/*"

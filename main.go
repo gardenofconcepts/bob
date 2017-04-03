@@ -51,6 +51,10 @@ func main() {
 			Name:  "skip-upload",
 			Usage: "don't upload builds",
 		},
+		cli.BoolFlag{
+			Name:  "skip-build",
+			Usage: "don't execute build process",
+		},
 		cli.StringFlag{
 			Name:  "s3-region",
 			Usage: "specify S3 region",
@@ -78,6 +82,8 @@ func main() {
 		ActionBuild,
 		ActionFind,
 		ActionVerify,
+		ActionPackage,
+		ActionClean,
 	}
 	cliApp.Run(os.Args)
 }

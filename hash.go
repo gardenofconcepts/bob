@@ -5,8 +5,8 @@ import (
 	"encoding/hex"
 	"io"
 	"os"
-	"strings"
 	"sort"
+	"strings"
 )
 
 func hashFile(filePath string) (string, error) {

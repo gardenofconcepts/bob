@@ -19,6 +19,7 @@ func (app *App) configure() {
 	}
 
 	app.configureLog()
+	app.configureBackend()
 }
 
 func (app *App) configureLog() {
@@ -33,4 +34,15 @@ func (app *App) configureLog() {
 	}
 
 	log.SetLevel(level)
+}
+
+func (app *App) configureBackend() {
+	storage := Storage()
+	storage.Register(StorageLocal(app.Cache))
+
+	if app.Storage == "s3" {
+		storage.Register(StorageS3(app.S3.Region, app.S3.Bucket))
+	}
+
+	app.StorageBag = storage
 }

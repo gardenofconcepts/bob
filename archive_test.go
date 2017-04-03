@@ -35,7 +35,7 @@ func TestArchive(t *testing.T) {
 		t.Error("Cannot create working dir:", err)
 	}
 
-	if err := NewArchive(archive).Compress(sourceDirectory, include, exclude); err != nil {
+	if _, err := NewArchive(archive).Compress(sourceDirectory, include, exclude); err != nil {
 		t.Error("Error while compressing data:", err)
 	}
 
@@ -76,4 +76,8 @@ func TestArchive(t *testing.T) {
 			t.Error("File found, but should be executable:", path)
 		}
 	}
+
+	t.Run("Extracting archive and overwrite existing files", func(t *testing.T) {
+
+	})
 }

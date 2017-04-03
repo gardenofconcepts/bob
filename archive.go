@@ -22,7 +22,7 @@ func NewArchive(path string) *Archive {
 	}
 }
 
-func (archive *Archive) Compress(baseDir string, includes []string, excludes []string) error {
+func (archive *Archive) Compress(baseDir string, includes []string, excludes []string) ([]string, error) {
 	log.WithFields(log.Fields{
 		"cwd":      baseDir,
 		"file":     archive.path,
@@ -30,11 +30,11 @@ func (archive *Archive) Compress(baseDir string, includes []string, excludes []s
 		"excludes": excludes,
 	}).Info("Packaging files")
 
-	files := 0
+	fileList := []string{}
 
 	file, err := os.Create(archive.path)
 	if err != nil {
-		return err
+		return fileList, err
 	}
 	defer file.Close()
 
@@ -61,7 +61,7 @@ func (archive *Archive) Compress(baseDir string, includes []string, excludes []s
 			return err
 		}
 
-		files++
+		fileList = append(fileList, filePath)
 
 		return nil
 	})
@@ -74,13 +74,60 @@ func (archive *Archive) Compress(baseDir string, includes []string, excludes []s
 		}).Fatal("Error creating archive")
 	}
 
-	if files == 0 {
+	if len(fileList) == 0 {
 		log.Fatal("Archive contains no files")
 
 		errors.New("Archive contains no files")
 	}
 
-	return nil
+	return fileList, nil
+}
+
+func compress(baseDir string, includes []string, excludes []string) ([]string, error) {
+	log.WithFields(log.Fields{
+		"cwd":      baseDir,
+		"includes": includes,
+		"excludes": excludes,
+	}).Info("Packaging files")
+
+	fileList := []string{}
+
+	err := filepath.Walk(baseDir, func(filePath string, fileInfo os.FileInfo, err error) error {
+		if err != nil {
+			log.Error("Error reading directory", err)
+
+			return err
+		}
+
+		if fileInfo.IsDir() {
+			return nil
+		}
+
+		if !matchList(includes, filePath, baseDir) || matchList(excludes, filePath, baseDir) {
+			log.WithField("file", filePath).Debug("Skipping file")
+
+			return nil
+		}
+
+		filePath, _ = filepath.Rel(baseDir, filePath)
+		fileList = append(fileList, filePath)
+
+		return nil
+	})
+
+	if err != nil {
+		log.WithFields(log.Fields{
+			"cwd": baseDir,
+		}).Fatal("Error creating archive")
+	}
+
+	if len(fileList) == 0 {
+		log.Fatal("Archive contains no files")
+
+		errors.New("Archive contains no files")
+	}
+
+	return fileList, nil
 }
 
 func addNode(baseDir string, filePath string, fileInfo os.FileInfo, tarWriter *tar.Writer) error {
@@ -300,6 +347,10 @@ func writeNewSymbolicLink(filePath string, target string) error {
 		}).Error("Making directory for file", filePath, err)
 
 		return err
+	}
+
+	if _, err := os.Stat(filePath); err == nil {
+		os.RemoveAll(filePath)
 	}
 
 	err = os.Symlink(target, filePath)
