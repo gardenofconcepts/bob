@@ -34,6 +34,24 @@ func (app App) printInfo(build BuildFile) {
 	fmt.Printf("Priority : %d\n", build.Priority)
 	fmt.Printf("Root     : %s\n", build.Root)
 	fmt.Printf("Cwd      : %s\n", build.Cwd)
+	fmt.Print("Constant :\n")
+
+	for _, constant := range build.Constant {
+		fmt.Printf("           (*) %s: %s (%s)\n", constant.Constant, constant.Result, constant.Command)
+	}
+
+	fmt.Print("Constraint:\n")
+
+	for _, constraint := range build.Constraint {
+		result := "-"
+
+		if constraint.Result {
+			result = "+"
+		}
+
+		fmt.Printf("           (%s) %s %s\n", result, constraint.ResultString, constraint.Condition)
+	}
+
 	fmt.Print("Verify   :\n")
 
 	for _, path := range build.Verify.Include {

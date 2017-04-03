@@ -5,7 +5,8 @@ REVISION = $(shell git rev-parse --short HEAD)
 
 build:
 	cd "$(DIR)"
-	go build -o bin/bob $(shell find *.go | grep -v _test | grep -v s3 )
+	sed -i -r 's/^(const APP_BUILD string = )"([a-zA-Z0-9]+)"/\1"$(REVISION)"/' version.go
+	go build -o bin/bob $(shell find *.go | grep -v _test )
 
 dist:
 	# GOARCH=386 = 32bit
@@ -49,6 +50,8 @@ init:
 	go get github.com/aws/aws-sdk-go
 	go get github.com/Sirupsen/logrus
 	go get github.com/imdario/mergo
+	go get github.com/Knetic/govaluate
+	go get github.com/hashicorp/go-version
 
 cleancode:
 	cd "$(DIR)"

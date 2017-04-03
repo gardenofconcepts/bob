@@ -3,6 +3,7 @@ package main
 import (
 	log "github.com/Sirupsen/logrus"
 	"os"
+	"path"
 	"path/filepath"
 )
 
@@ -19,6 +20,10 @@ func StorageLocal(path string) *StorageLocalBackend {
 }
 
 func (svc *StorageLocalBackend) Has(build BuildFile) bool {
+	if len(build.Archive) == 0 {
+		build.Archive = path.Join(svc.path, build.Hash+".tar.gz")
+	}
+
 	file := filepath.Join(svc.path, filepath.Base(build.Archive))
 
 	log.WithFields(log.Fields{

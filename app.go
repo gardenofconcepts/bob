@@ -12,7 +12,7 @@ func (app *App) configure() {
 		config := ConfigReader()
 		config.Read(app.Config)
 		config.Apply(app)
-	} else if _, err := os.Stat(CONFIG_FILE); os.IsExist(err) {
+	} else if _, err := os.Stat(CONFIG_FILE); err == nil {
 		config := ConfigReader()
 		config.Read(CONFIG_FILE)
 		config.Apply(app)

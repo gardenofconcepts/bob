@@ -1,7 +1,18 @@
 package main
 
-import "testing"
+import (
+	"os"
+	"testing"
+)
 
 func TestStorageLocal(t *testing.T) {
-	t.Skip("Not implemented yet")
+	storage := StorageLocal(os.TempDir())
+
+	result := storage.Has(BuildFile{
+		Hash: "123",
+	})
+
+	if result == true {
+		t.Errorf("Expect %s, got %s", "false", true)
+	}
 }

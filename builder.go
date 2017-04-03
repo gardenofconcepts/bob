@@ -15,7 +15,14 @@ func Builder() *BuildJob {
 // TODO: error handling
 func (e *BuildJob) Build(directory string, builds []Build) {
 	for _, build := range builds {
-		e.Run(directory, build)
+		err := e.Run(directory, build)
+
+		if err != nil {
+			log.WithFields(log.Fields{
+				"cmd": build.Command,
+				"cwd": directory,
+			}).Fatal("Error while executing build")
+		}
 	}
 }
 
@@ -39,7 +46,13 @@ func (e *BuildJob) Run(directory string, build Build) error {
 	err := cmd.Run()
 
 	if err != nil {
-		log.Fatal("Error while running command", err, stdout.String(), stderr.String())
+		log.WithFields(log.Fields{
+			"cmd":    build.Command,
+			"cwd":    directory,
+			"err":    err,
+			"stdout": stdout.String(),
+			"stderr": stderr.String(),
+		}).Error("Error while running command")
 
 		return err
 	}

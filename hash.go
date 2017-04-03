@@ -9,6 +9,14 @@ import (
 	"strings"
 )
 
+func hashValue(key string, value string) (string, error) {
+	h := md5.New()
+	io.WriteString(h, key)
+	io.WriteString(h, value)
+
+	return hex.EncodeToString(h.Sum(nil)), nil
+}
+
 func hashFile(filePath string) (string, error) {
 	var result []byte
 

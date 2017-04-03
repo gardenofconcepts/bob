@@ -39,7 +39,13 @@ func (app *App) processVerification(cacheDir string, build BuildFile, storage St
 	// If there are no verification pattern defined skip the whole process
 	// and execute the commands directly
 	if len(build.Verify.Include) > 0 {
-		hash, _ := Analyzer(build.Root, build.Verify.Include, build.Verify.Exclude)
+		hashes := read(build.Root, build.Verify.Include, build.Verify.Exclude)
+
+		for _, constraint := range build.Constraint {
+			hashes[constraint.Condition] = constraint.Hash
+		}
+
+		hash := hashList(hashes)
 
 		build.Hash = hash
 		build.Archive = path.Join(cacheDir, hash+".tar.gz")

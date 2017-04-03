@@ -85,4 +85,62 @@ func TestParser(t *testing.T) {
 			t.Errorf("Expect %s, got %s", "/var/www", build.Root)
 		}
 	})
+
+	t.Run("Read and parse constants", func(t *testing.T) {
+		build := Parser()
+		build.Directory = "/var/www"
+		build.Constant = []Constant{
+			Constant{
+				Constant: "OS_VERSION",
+				Command:  "uname -r", // Linux
+			},
+			Constant{ // overwrite ARCH
+				Constant: "ARCH",
+				Command:  "uname -m", // x86_64
+			},
+		}
+		build.Constraint = []Constraint{
+			Constraint{
+				Condition: "OS == 'linux'",
+			},
+			Constraint{
+				Condition: "ARCH != 'x86_64'",
+			},
+			Constraint{
+				Condition: "version_compare(OS_VERSION, '>= 4.10')",
+			},
+			Constraint{
+				Condition: "version_compare(OS_VERSION, '<= 4.10')",
+			},
+			Constraint{
+				Condition: "OS",
+			},
+		}
+
+		build.determine()
+
+		if build.Constant[1].Result != "x86_64" { // overwritten, instead of amd64
+			t.Errorf("Expect %s, got %s", "x86_64", build.Constant[1].Result)
+		}
+
+		if build.Constraint[0].Result == false {
+			t.Errorf("Expect %s, got %s", "true", build.Constraint[0].Result)
+		}
+
+		if build.Constraint[1].Result == true {
+			t.Errorf("Expect %s, got %s", "false", build.Constraint[1].Result)
+		}
+
+		if build.Constraint[2].Result == false {
+			t.Errorf("Expect %s, got %s", "false", build.Constraint[2].Result)
+		}
+
+		if build.Constraint[3].Result == true {
+			t.Errorf("Expect %s, got %s", "false", build.Constraint[3].Result)
+		}
+
+		if build.Constraint[4].ResultString != "linux" {
+			t.Errorf("Expect %s, got %s", "linux", build.Constraint[4].ResultString)
+		}
+	})
 }

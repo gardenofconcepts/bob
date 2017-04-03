@@ -9,9 +9,18 @@ type Build struct {
 	Command string `yaml:"command"`
 }
 
-type Constraint struct {
+type Constant struct {
 	Command  string `yaml:"command"`
 	Constant string `yaml:"constant"` // CONSTANT_OS, CONSTANT_VERSION (bob version)
+	Result   string
+}
+
+type Constraint struct {
+	Condition    string `yaml:"condition"`
+	Name         string `yaml:"name"`
+	Hash         string
+	Result       bool
+	ResultString string
 }
 
 type Verify struct {
@@ -36,6 +45,7 @@ type BuildFile struct {
 	Verify     Verify       `yaml:"verify"`
 	Package    Package      `yaml:"package"`
 	Build      []Build      `yaml:"build"`
+	Constant   []Constant   `yaml:"constant"`
 	Constraint []Constraint `yaml:"constraint"` // node/npm version, OS identifier // https://github.com/Knetic/govaluate
 }
 

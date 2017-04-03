@@ -13,3 +13,17 @@ package:
     - "src/**"
 build:
   - command: /bin/mkdir -pv blubblub
+constant:
+  -
+    constant: "KERNEL_VERSION"
+    command: "uname -r"
+constraint:
+  -
+    name: "Check for 64 Bit"
+    condition: "ARCH == 'amd64'"
+  -
+    name: "Check kernel version"
+    condition: "version_compare(KERNEL_VERSION, '>= 4.10')"
+  -
+    name: "Provider OS"
+    condition: "OS"

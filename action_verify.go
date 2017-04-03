@@ -27,19 +27,30 @@ func (app App) verify() {
 		hashes := read(build.Root, build.Verify.Include, build.Verify.Exclude)
 		status := "not found"
 
+		for _, constraint := range build.Constraint {
+			hashes[constraint.Condition] = constraint.Hash
+		}
+
+		hash := hashList(hashes)
+
 		if app.StorageBag.Has(BuildFile{
-			Hash: hashList(hashes),
+			Hash: hash,
 		}) {
 			status = "found"
 		}
 
-		fmt.Printf("Hash     : %s\n", hashList(hashes))
+		fmt.Printf("Hash     : %s\n", hash)
 		fmt.Printf("Status   : %s\n", status)
 		fmt.Print("Verified :\n")
 
 		for path, hash := range hashes {
-			path, _ = filepath.Rel(build.Root, path)
-			fmt.Printf("           %s\t%s\n", hash, path)
+			displayedPath, err := filepath.Rel(build.Root, path)
+
+			if err != nil {
+				displayedPath = "Constraint: " + path
+			}
+
+			fmt.Printf("           %s\t%s\n", hash, displayedPath)
 		}
 
 		fmt.Print("\n-----------------------------------------\n\n")
