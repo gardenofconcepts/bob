@@ -17,7 +17,11 @@ build/*
 !build/.gitkeep
 pkg/*
 !pkg/.gitkeep
-src/*
+
+.cache
+
+/**/vendor/**
+!**/vendor/vendor.json
 
 # Architecture specific extensions/prefixes
 *.[568vq]
