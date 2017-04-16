@@ -93,16 +93,12 @@ func (build *BuildFile) loadConstants() error {
 			log.WithFields(log.Fields{
 				"constant": constant.Constant,
 				"cmd":      constant.Command,
+				"value":    value.(string),
 			}).Debug("Hit cache")
 
 			build.Constant[i].Result = value.(string)
 
-			continue;
-		} else {
-			log.WithFields(log.Fields{
-				"constant": constant.Constant,
-				"cmd":      constant.Command,
-			}).Debug("Doesn't hit cache")
+			continue
 		}
 
 		var stdout bytes.Buffer
@@ -125,9 +121,15 @@ func (build *BuildFile) loadConstants() error {
 
 		value = strings.Trim(stdout.String(), " \n")
 
+		log.WithFields(log.Fields{
+			"constant": constant.Constant,
+			"cmd":      constant.Command,
+			"result":   value.(string),
+		}).Debug("Doesn't hit cache")
+
 		build.Constant[i].Result = value.(string)
 
-		c.Set(constant.Command, value.(string), cache.DefaultExpiration)
+		c.Set(constant.Command, value.(string), cache.NoExpiration)
 	}
 
 	return nil
@@ -142,8 +144,21 @@ func (build *BuildFile) executeConstraints() error {
 			return (float64)(length), nil
 		},
 		"version_compare": func(args ...interface{}) (interface{}, error) {
-			givenVersion, _ := version.NewVersion(args[0].(string))
-			constraint, _ := version.NewConstraint(args[1].(string))
+			givenVersion, e := version.NewVersion(args[0].(string))
+
+			if e != nil {
+				log.WithFields(log.Fields{
+					"version": givenVersion,
+				}).Fatal(e)
+			}
+
+			constraint, e := version.NewConstraint(args[1].(string))
+
+			if e != nil {
+				log.WithFields(log.Fields{
+					"version": givenVersion,
+				}).Fatal(e)
+			}
 
 			return (bool)(constraint.Check(givenVersion)), nil
 		},

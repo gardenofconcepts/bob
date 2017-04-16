@@ -2,6 +2,7 @@ package parser
 
 import (
 	"testing"
+	"bob/util"
 )
 
 func TestParser(t *testing.T) {
@@ -148,6 +149,38 @@ func TestParser(t *testing.T) {
 
 		if build.Constraint[4].ResultString != "linux" {
 			t.Errorf("Expect %s, got %s", "linux", build.Constraint[4].ResultString)
+		}
+	})
+
+	t.Run("Test constant cache", func(t *testing.T) {
+
+		file := "../../../build/" + util.RandomString(10)
+
+		build := Parser()
+		build.Directory = "/var/www"
+		build.Constant = []Constant{
+			{
+				Constant: "DATE",
+				Command:  "test ! -f "+file+" && (echo 'test' > "+file+" ; cat "+file+") || (echo 'any_other_data' > "+file+" ; cat "+file+")",
+			},
+		}
+		build.Constraint = []Constraint{
+			{
+				Condition: "DATE == 'test'",
+			},
+		}
+
+		build.loadConstants()
+		build.loadConstants()
+
+		build.executeConstraints()
+
+		if build.Constant[0].Result != "test" {
+			t.Errorf("Expect %s, got %s", "test", build.Constant[0].Result)
+		}
+
+		if build.Constraint[0].Result != true {
+			t.Errorf("Expect %s, got %s", "true", build.Constraint[0].Result)
 		}
 	})
 }
