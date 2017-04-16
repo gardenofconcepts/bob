@@ -3,18 +3,24 @@ package main
 import (
 	log "github.com/Sirupsen/logrus"
 	"os"
+	"path/filepath"
 )
 
 func (app *App) configure() {
 	app.configureLog()
 
+	if app.WorkingDir == "" {
+		path, _ := os.Getwd()
+		app.WorkingDir = path
+	}
+
 	if len(app.Config) > 0 {
 		config := ConfigReader()
 		config.Read(app.Config)
 		config.Apply(app)
-	} else if _, err := os.Stat(CONFIG_FILE); err == nil {
+	} else if _, err := os.Stat(filepath.Join(app.WorkingDir, CONFIG_FILE)); err == nil {
 		config := ConfigReader()
-		config.Read(CONFIG_FILE)
+		config.Read(filepath.Join(app.WorkingDir, CONFIG_FILE))
 		config.Apply(app)
 	}
 

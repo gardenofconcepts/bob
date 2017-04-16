@@ -12,7 +12,11 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"github.com/patrickmn/go-cache"
+	"time"
 )
+
+var c = cache.New(15*time.Minute, 60*time.Minute)
 
 func Parser() *BuildFile {
 	return &BuildFile{
@@ -80,6 +84,23 @@ func (build *BuildFile) loadConstants() error {
 			"cwd":      build.Cwd,
 		}).Info("Checking constant")
 
+		value, found := c.Get(constant.Command)
+		if found {
+			log.WithFields(log.Fields{
+				"constant": constant.Constant,
+				"cmd":      constant.Command,
+			}).Debug("Hit cache")
+
+			build.Constant[i].Result = value.(string)
+
+			continue;
+		} else {
+			log.WithFields(log.Fields{
+				"constant": constant.Constant,
+				"cmd":      constant.Command,
+			}).Debug("Doesn't hit cache")
+		}
+
 		var stdout bytes.Buffer
 		var stderr bytes.Buffer
 
@@ -98,7 +119,11 @@ func (build *BuildFile) loadConstants() error {
 
 		log.Debugf("Result: %q\n", stdout.String())
 
-		build.Constant[i].Result = strings.Trim(stdout.String(), " \n")
+		value = strings.Trim(stdout.String(), " \n")
+
+		build.Constant[i].Result = value.(string)
+
+		c.Set(constant.Command, value.(string), cache.DefaultExpiration)
 	}
 
 	return nil

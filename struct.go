@@ -50,6 +50,7 @@ type BuildFile struct {
 }
 
 type App struct {
+	WorkingDir string
 	Path       string
 	Config     string
 	Force      bool

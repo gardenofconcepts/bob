@@ -52,6 +52,7 @@ init:
 	go get github.com/imdario/mergo
 	go get github.com/Knetic/govaluate
 	go get github.com/hashicorp/go-version
+	go get github.com/patrickmn/go-cache
 
 cleancode:
 	cd "$(DIR)"
